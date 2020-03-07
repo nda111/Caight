@@ -5,12 +5,14 @@
 }
 @using System.IO;
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <div class="text-center">
+        <h1 class="display-4">Welcome</h1>
+        <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 
-    @{ 
-        Console.WriteLine("abcde");
-    }
-    
-</div>
+        @{
+            const string naver = "abcdefg Naver hijklmn";
+
+            <a href="https://www.naver.com">@naver.Substring(8, 5)</a>
+        }
+
+    </div>
