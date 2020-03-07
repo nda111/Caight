@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "Home page";
 }
-@using System.IO;
 
     <div class="text-center">
         <h1 class="display-4">Welcome</h1>
@@ -11,8 +10,13 @@
 
         @{
             const string naver = "abcdefg Naver hijklmn";
+            const string url = "https://www.naver.com";
 
-            <a href="https://www.naver.com">@naver.Substring(8, 5)</a>
+            <a href="@url">@naver.Substring(8, 5)</a>
         }
+
+        <script>
+            alert("Message");
+        </script>
 
     </div>

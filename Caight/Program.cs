@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Caight
 {
@@ -29,9 +30,25 @@ namespace Caight
                 }
             });
 
-            FileStream stream = File.Create("test.txt");
-            stream.Write(new byte[] { 1, 2, 3, 4, 5 }, 0, 5);
-            stream.Close();
+            FileStream stream;
+            string path = "test.txt";
+            if (!File.Exists(path))
+            {
+                stream = File.Create(path);
+            }
+            else
+            {
+                stream = File.Open("test.txt", FileMode.Open, FileAccess.ReadWrite);
+            }
+
+            stream.Seek(0, SeekOrigin.End);
+            var writer = new StreamWriter(stream);
+            writer.WriteLine("Hello World!!!");
+            writer.Flush();
+
+            stream.Seek(0, SeekOrigin.Begin);
+            var reader = new StreamReader(stream);
+            Console.WriteLine(reader.ReadToEnd());
 
             CreateHostBuilder(args).Build().Run();
             offSwitch = false;
