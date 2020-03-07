@@ -7,23 +7,32 @@
     ViewData["Title"] = "Home page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <div class="text-center">
+        <h1 class="display-4">Welcome</h1>
+        <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 
-    @{
-        string url = $"https://{HttpContext.Request.Host}{HttpContext.Request.Path}";
-        <p>@url</p>
-        <p>@Dns.GetHostEntry(url).AddressList[0].ToString()</p>
+        @{
+            string url = $"https://{HttpContext.Request.Host}{HttpContext.Request.Path}";
+            <p>@url</p>
+
+            try
+            {
+                <p>@Dns.GetHostEntry(url).AddressList[0].ToString()</p>
+            }
+            catch (Exception e)
+            {
+                <p>@e.GetType().Name</p>
+                <p>@e.Message</p>
+            }
 
 
-        @*Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        socket.Connect(new IPEndPoint(IPAddress.Parse(Dns.GetHostAddresses(url)[0].ToString()), 10101));
+    @*Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+    socket.Connect(new IPEndPoint(IPAddress.Parse(Dns.GetHostAddresses(url)[0].ToString()), 10101));
 
-        using (var reader = new StreamReader(new NetworkStream(socket)))
-        {
-            <p>@reader.ReadLine()</p>
-        }*@
-    }
+    using (var reader = new StreamReader(new NetworkStream(socket)))
+    {
+        <p>@reader.ReadLine()</p>
+    }*@
+        }
 
-</div>
+    </div>
