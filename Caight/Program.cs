@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
+using System.Net.Sockets;
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -17,38 +18,44 @@ namespace Caight
     {
         public static void Main(string[] args)
         {
-            bool offSwitch = true;
-
-            Task.Run(() =>
-            {
-                int i = 0;
-                while (offSwitch)
-                {
-                    System.Diagnostics.Debug.WriteLine(i++);
-
-                    Thread.Sleep(1000);
-                }
-            });
-
             FileStream stream;
             string path = "test.txt";
             if (!File.Exists(path))
             {
                 stream = File.Create(path);
+
+                var writer = new StreamWriter(stream);
+                writer.WriteLine("Hello World!!!");
+                writer.Flush();
             }
             else
             {
-                stream = File.Open("test.txt", FileMode.Open, FileAccess.ReadWrite);
+                stream = File.Open("test.txt", FileMode.Open, FileAccess.Read);
             }
-
-            stream.Seek(0, SeekOrigin.End);
-            var writer = new StreamWriter(stream);
-            writer.WriteLine("Hello World!!!");
-            writer.Flush();
 
             stream.Seek(0, SeekOrigin.Begin);
             var reader = new StreamReader(stream);
-            Console.WriteLine(reader.ReadToEnd());
+            string msg = reader.ReadToEnd();
+            stream.Close();
+
+            bool offSwitch = true;
+            Task.Run(() =>
+            {
+                Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                server.Bind(new IPEndPoint(IPAddress.Any, 10101));
+                server.Listen(10);
+
+                while (offSwitch)
+                {
+                    Socket client = server.Accept();
+                    using (var writer = new StreamWriter(new NetworkStream(client)))
+                    {
+                        writer.WriteLine(msg);
+                    }
+                }
+
+                server.Close();
+            });
 
             CreateHostBuilder(args).Build().Run();
             offSwitch = false;

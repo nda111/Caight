@@ -1,22 +1,25 @@
 ﻿@page
+@using System.Net;
+@using System.Net.Sockets;
+@using System.IO;
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
 }
 
-    <div class="text-center">
-        <h1 class="display-4">Welcome</h1>
-        <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 
-        @{
-            const string naver = "abcdefg Naver hijklmn";
-            const string url = "https://www.naver.com";
+    @{
+        string url = HttpContext.Request.Host + HttpContext.Request.Path;
+        Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        socket.Connect(new IPEndPoint(IPAddress.Parse(url), 10101));
 
-            <a href="@url">@naver.Substring(8, 5)</a>
+        using (var reader = new StreamReader(new NetworkStream(socket)))
+        {
+            <p>@reader.ReadLine()</p>
         }
+    }
 
-        <script>
-            alert("Message");
-        </script>
-
-    </div>
+</div>
