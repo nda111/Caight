@@ -12,14 +12,16 @@
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 
     @{
-        string url = HttpContext.Request.Host + HttpContext.Request.Path;
-        Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        socket.Connect(new IPEndPoint(IPAddress.Parse(url), 10101));
+        string url = $"https://{HttpContext.Request.Host}{HttpContext.Request.Path}";
+        <p>url</p>
+
+        @*Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        socket.Connect(new IPEndPoint(IPAddress.Parse(Dns.GetHostAddresses(url)[0].ToString()), 10101));
 
         using (var reader = new StreamReader(new NetworkStream(socket)))
         {
             <p>@reader.ReadLine()</p>
-        }
+        }*@
     }
 
 </div>
