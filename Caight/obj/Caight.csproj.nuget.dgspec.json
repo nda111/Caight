@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\nda11\\source\\repos\\Caight\\Caight\\Caight.csproj": {}
+    "C:\\Users\\nda11\\source\\Git\\Caight\\Caight\\Caight.csproj": {}
   },
   "projects": {
-    "C:\\Users\\nda11\\source\\repos\\Caight\\Caight\\Caight.csproj": {
+    "C:\\Users\\nda11\\source\\Git\\Caight\\Caight\\Caight.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\nda11\\source\\repos\\Caight\\Caight\\Caight.csproj",
+        "projectUniqueName": "C:\\Users\\nda11\\source\\Git\\Caight\\Caight\\Caight.csproj",
         "projectName": "Caight",
-        "projectPath": "C:\\Users\\nda11\\source\\repos\\Caight\\Caight\\Caight.csproj",
+        "projectPath": "C:\\Users\\nda11\\source\\Git\\Caight\\Caight\\Caight.csproj",
         "packagesPath": "C:\\Users\\nda11\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\nda11\\source\\repos\\Caight\\Caight\\obj\\",
+        "outputPath": "C:\\Users\\nda11\\source\\Git\\Caight\\Caight\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Microsoft\\Xamarin\\NuGet\\"
