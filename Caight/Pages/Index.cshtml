@@ -1,38 +1,43 @@
 ﻿@page
+@using System.Text;
 @using System.Net;
-@using System.Net.Sockets;
+@using System.Net.WebSockets;
+@using System.Threading;
 @using System.IO;
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
 }
 
-    <div class="text-center">
-        <h1 class="display-4">Welcome</h1>
-        <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 
-        @{
-            string url = $"https://{HttpContext.Request.Host}{HttpContext.Request.Path}";
-            <p>@url</p>
+    @{
+        byte[] buffer = null;
+        string url = $"ws://{HttpContext.Request.Host}{HttpContext.Request.Path}";
+        <p>Host: @url</p>
 
-            try
-            {
-                <p>@Dns.GetHostEntry(url).AddressList[0].ToString()</p>
-            }
-            catch (Exception e)
-            {
-                <p>@e.GetType().Name</p>
-                <p>@e.Message</p>
-            }
+        try
+        {
+            ClientWebSocket client = new ClientWebSocket();
+            await client.ConnectAsync(new Uri(url), System.Threading.CancellationToken.None);
 
+            buffer = Encoding.UTF8.GetBytes("Hello World!!!");
+            await client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+            <p>Sent</p>
 
-    @*Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-    socket.Connect(new IPEndPoint(IPAddress.Parse(Dns.GetHostAddresses(url)[0].ToString()), 10101));
-
-    using (var reader = new StreamReader(new NetworkStream(socket)))
-    {
-        <p>@reader.ReadLine()</p>
-    }*@
+                await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            <p>Received</p>
+            <p>@Encoding.UTF8.GetString(buffer)</p>
+        }
+        catch (Exception e)
+        {
+            <h1>Exception</h1> <hr />
+            <p>@e.GetType().Name</p>
+            <p>@e.ToString()</p>
         }
 
-    </div>
+    }
+
+</div>

@@ -5,12 +5,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
+using System.Web;
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Net.WebSockets;
 
 namespace Caight
 {
@@ -18,43 +20,25 @@ namespace Caight
     {
         public static void Main(string[] args)
         {
-            FileStream stream;
-            string path = "test.txt";
-            if (!File.Exists(path))
-            {
-                stream = File.Create(path);
-
-                var writer = new StreamWriter(stream);
-                writer.WriteLine("Hello World!!!");
-                writer.Flush();
-            }
-            else
-            {
-                stream = File.Open("test.txt", FileMode.Open, FileAccess.Read);
-            }
-
-            stream.Seek(0, SeekOrigin.Begin);
-            var reader = new StreamReader(stream);
-            string msg = reader.ReadToEnd();
-            stream.Close();
-
             bool offSwitch = true;
-            Task.Run(() =>
+            Task.Run(async () =>
             {
-                Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                server.Bind(new IPEndPoint(IPAddress.Any, 10101));
-                server.Listen(10);
+                Socket socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
+                socket.Bind(new IPEndPoint(IPAddress.Any, 10101));
 
+                socket.Listen(10);
                 while (offSwitch)
                 {
-                    Socket client = server.Accept();
-                    using (var writer = new StreamWriter(new NetworkStream(client)))
+                    using (Socket client = await socket.AcceptAsync())
                     {
-                        writer.WriteLine(msg);
+                        using (var writer = new StreamWriter(new NetworkStream(client)))
+                        {
+                            writer.WriteLine("Hello World!!!");
+                        }
+
+                        client.Close();
                     }
                 }
-
-                server.Close();
             });
 
             CreateHostBuilder(args).Build().Run();
