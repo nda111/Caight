@@ -18,14 +18,6 @@
         string url = $"wss://{HttpContext.Request.Host}{HttpContext.Request.Path}ws";
         <p>Host: @url</p>
 
-        void work()
-        {
-            <script>
-                alert("HelloWorld");
-            </script>
-        }
-
-        //*
         try
         {
             ClientWebSocket client = new ClientWebSocket();
@@ -56,8 +48,6 @@
                 }
             </table>
         }
-        //*/
-
     }
 
 </div>

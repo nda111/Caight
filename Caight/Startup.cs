@@ -48,12 +48,12 @@ namespace Caight
             app.UseWebSockets();
             app.Use(async (context, next) =>
             {
-                if (context.Request.Path == "/ws" || context.Request.Path == "/wss")
+                if (context.Request.Path == "/ws")// || context.Request.Path == "/wss")
                 {
                     if (context.WebSockets.IsWebSocketRequest)
                     {
                         WebSocket socket = await context.WebSockets.AcceptWebSocketAsync(); 
-                        await Echo(context, socket);
+                        await Response(context, socket);
                     }
                     else
                     {
@@ -76,7 +76,7 @@ namespace Caight
             });
         }
 
-        private async Task Echo(HttpContext context, WebSocket socket)
+        private async Task Response(HttpContext context, WebSocket socket)
         {
             var buffer = new byte[1024 * 4];
             WebSocketReceiveResult result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
