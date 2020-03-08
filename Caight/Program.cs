@@ -20,29 +20,7 @@ namespace Caight
     {
         public static void Main(string[] args)
         {
-            bool offSwitch = true;
-            Task.Run(async () =>
-            {
-                Socket socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
-                socket.Bind(new IPEndPoint(IPAddress.Any, 10101));
-
-                socket.Listen(10);
-                while (offSwitch)
-                {
-                    using (Socket client = await socket.AcceptAsync())
-                    {
-                        using (var writer = new StreamWriter(new NetworkStream(client)))
-                        {
-                            writer.WriteLine("Hello World!!!");
-                        }
-
-                        client.Close();
-                    }
-                }
-            });
-
             CreateHostBuilder(args).Build().Run();
-            offSwitch = false;
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
