@@ -48,7 +48,7 @@ namespace Caight
             app.UseWebSockets();
             app.Use(async (context, next) =>
             {
-                if (context.Request.Path == "/ws")// || context.Request.Path == "/wss")
+                if (context.Request.Path == "/ws")
                 {
                     if (context.WebSockets.IsWebSocketRequest)
                     {
@@ -66,13 +66,19 @@ namespace Caight
                 }
             });
 
-            app.UseRouting();
+            app.UseRouting(); 
 
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
+            });
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
             });
         }
 

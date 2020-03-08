@@ -18,6 +18,12 @@
         string url = $"wss://{HttpContext.Request.Host}{HttpContext.Request.Path}ws";
         <p>Host: @url</p>
 
+        <form asp-controller="String" asp-action="Reverse" method="post">
+            <input type="text" name="text" />
+            <br />
+            <input type="submit" value="Submit" />
+        </form>
+
         try
         {
             ClientWebSocket client = new ClientWebSocket();
