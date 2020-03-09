@@ -12,9 +12,11 @@ namespace Caight.Pages
     {
         private readonly ILogger<IndexModel> _logger;
 
+        public string Message { get; private set; } = "Message: ";
+
         public IndexModel(ILogger<IndexModel> logger)
         {
-            _logger = logger;
+            _logger = logger;   
         }
 
         public void OnGet()

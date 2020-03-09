@@ -1,13 +1,15 @@
 ﻿@page
+
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
 @using System.Text;
 @using System.Net;
 @using System.Net.WebSockets;
 @using System.Threading;
 @using System.IO;
-@model IndexModel
-@{
-    ViewData["Title"] = "Home page";
-}
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
@@ -15,8 +17,8 @@
 
     @{
         byte[] buffer = null;
-        string url = $"wss://{HttpContext.Request.Host}{HttpContext.Request.Path}ws";
-        <p>Host: @url</p>
+        string webSocketAddr = $"wss://{HttpContext.Request.Host}{HttpContext.Request.Path}ws";
+        <p>Host: @webSocketAddr</p>
 
         <form asp-controller="String" asp-action="Reverse" method="post">
             <input type="text" name="text" />
@@ -27,15 +29,27 @@
         try
         {
             ClientWebSocket client = new ClientWebSocket();
-            await client.ConnectAsync(new Uri(url), System.Threading.CancellationToken.None);
+            await client.ConnectAsync(new Uri(webSocketAddr), System.Threading.CancellationToken.None);
 
-            buffer = Encoding.UTF8.GetBytes("Hello World!!!");
+            // snd1
+            buffer = Encoding.UTF8.GetBytes("MessageFromClient\0");
             await client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
             <p>Sent</p>
 
+            // rec2
+            buffer = new byte[4096];
             await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             <p>Received</p>
-            <p>@Encoding.UTF8.GetString(buffer)</p>
+            <p>@Encoding.UTF8.GetString(buffer).Split('\0')[0]</p>
+
+            await client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+
+            //
+            //Thread.Sleep(5000);
+            //
+            //await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            //<br />
+            //<p>FileSystemTextResult: @Encoding.UTF8.GetString(buffer)</p>
         }
         catch (Exception e)
         {

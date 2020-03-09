@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using System.Text;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +13,7 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 
 namespace Caight
 {
@@ -74,26 +77,34 @@ namespace Caight
             {
                 endpoints.MapRazorPages();
             });
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
-            });
         }
 
         private async Task Response(HttpContext context, WebSocket socket)
         {
             var buffer = new byte[1024 * 4];
-            WebSocketReceiveResult result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            WebSocketReceiveResult result = null;
 
-            while (!result.CloseStatus.HasValue)
+            while (!socket.CloseStatus.HasValue)
             {
-                await socket.SendAsync(new ArraySegment<byte>(buffer, 0, result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
+                // rec1
+                result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                string msg = Encoding.UTF8.GetString(buffer).Split('\0')[0];
+                using (var memStream = new MemoryStream(buffer))
+                {
+                    var writer = new StreamWriter(memStream, Encoding.UTF8);
+                    writer.Write(msg + '\0');
+                }
+                Console.WriteLine("Receive: " + msg);
+
+                // snd2
+                await socket.SendAsync(new ArraySegment<byte>(buffer), result.MessageType, result.EndOfMessage, CancellationToken.None);
+                Console.WriteLine("SendBack");
+
                 result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             }
 
-            await socket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+            await socket.CloseOutputAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+            Console.WriteLine("Close");
         }
     }
 }
