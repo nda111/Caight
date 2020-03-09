@@ -31,18 +31,11 @@
             ClientWebSocket client = new ClientWebSocket();
             await client.ConnectAsync(new Uri(webSocketAddr), System.Threading.CancellationToken.None);
 
-            // snd1
-            buffer = Encoding.UTF8.GetBytes("MessageFromClient\0");
-            await client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-            <p>Sent</p>
-
-            // rec2
             buffer = new byte[4096];
             await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            <p>Received</p>
-            <p>@Encoding.UTF8.GetString(buffer).Split('\0')[0]</p>
+            <p>Received: @Encoding.UTF8.GetString(buffer).Split('\0')[0]</p>
 
-            await client.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+            await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
 
             //
             //Thread.Sleep(5000);
