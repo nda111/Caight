@@ -14,25 +14,23 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Caight
 {
     public class Startup
     {
-        private const string __PATH__ = "test.txt";
+        private NpgsqlConnection conn = new NpgsqlConnection();
 
         public Startup(IConfiguration configuration)
         {
-            if (!File.Exists(__PATH__))
-            {
-                File.Create(__PATH__).Close();
-                using (var stream = File.Open(__PATH__, FileMode.Open, FileAccess.Write))
-                {
-                    var writer = new StreamWriter(stream);
-                    writer.WriteLine(0);
-                    writer.Flush();
-                }
-            }
+            conn.ConnectionString =
+                "HOST=54.80.184.43;" +
+                "PORT=5432;" +
+                "USERNAME=chwnhsjrvwjcmn;" +
+                "PASSWORD=27f3f0355524328a1608b7f408b39c45dc08686f29c385b38705a4268964bdfd;" +
+                "DATABASE=da7sfef764j2vr";
+            conn.Open();
 
             Configuration = configuration;
         }
@@ -94,34 +92,35 @@ namespace Caight
 
         private async Task Response(HttpContext context, WebSocket socket)
         {
-            string message;
-            using (var stream = File.Open(__PATH__, FileMode.Open, FileAccess.ReadWrite))
-            {
-                var reader = new StreamReader(stream);
-                int cnt = int.Parse(reader.ReadLine()) + 1;
-
-                stream.Seek(0, SeekOrigin.Begin);
-                var writer = new StreamWriter(stream);
-                writer.WriteLine(cnt);
-                writer.Flush();
-
-                message = cnt + "\0";
-            }
-
             var buffer = new byte[1024 * 4];
             WebSocketReceiveResult result = null;// TODO: FIlesystem test
-
+                
             while (!socket.CloseStatus.HasValue)
             {
-                using (var memStream = new MemoryStream(buffer))
-                {
-                    var writer = new StreamWriter(memStream, Encoding.UTF8);
-                    writer.Write(message);
-                    writer.Flush();
-                }
+                result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                string[] cmdString = Encoding.UTF8.GetString(buffer).Split('\0');
 
-                await socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-                Console.WriteLine("Send: " + message);
+                switch (cmdString[0].ToUpper())
+                {
+                    case "INSERT":
+                        using (var cmd = new NpgsqlCommand($"INSERT INTO {cmdString[1]} VALUES('{cmdString[2]}');") { Connection = conn })
+                        {
+                            await cmd.ExecuteNonQueryAsync();
+                        }
+
+                        using (var memStream = new MemoryStream(buffer))
+                        {
+                            var writer = new StreamWriter(memStream);
+                            writer.Write("OK\0");
+                            writer.Flush();
+                        }
+
+                        await socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                        break;
+
+                    default:
+                        break;
+                }
 
                 result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             }

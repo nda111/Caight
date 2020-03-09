@@ -31,9 +31,12 @@
             ClientWebSocket client = new ClientWebSocket();
             await client.ConnectAsync(new Uri(webSocketAddr), System.Threading.CancellationToken.None);
 
-            buffer = new byte[4096];
+            buffer = Encoding.UTF8.GetBytes("insert\0test\0this text\0");
+            await client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+            <p>Send</p>
+
             await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            <p>Received: @Encoding.UTF8.GetString(buffer).Split('\0')[0]</p>
+            <p>Result: @Encoding.UTF8.GetString(buffer).Split('\0')[0]</p>
 
             await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
 
