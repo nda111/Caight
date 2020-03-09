@@ -6,6 +6,7 @@ using System.Text;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Data.Odbc;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -14,22 +15,23 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace Caight
 {
     public class Startup
     {
-        private NpgsqlConnection conn = new NpgsqlConnection();
+        //private NpgsqlConnection conn = new NpgsqlConnection();
+        private OdbcConnection conn = new OdbcConnection();
 
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration )
         {
-            conn.ConnectionString =
-                "HOST=54.80.184.43;" +
-                "PORT=5432;" +
-                "USERNAME=chwnhsjrvwjcmn;" +
-                "PASSWORD=27f3f0355524328a1608b7f408b39c45dc08686f29c385b38705a4268964bdfd;" +
-                "DATABASE=da7sfef764j2vr";
+            conn.ConnectionString = 
+                "Driver=PostgreSQL;" +
+                "Server=ec2-54-80-184-43.compute-1.amazonaws.com;" +
+                "Port=5432;" +
+                "Database=da7sfef764j2vr;" +
+                "Uid=chwnhsjrvwjcmn;" +
+                "Pwd=27f3f0355524328a1608b7f408b39c45dc08686f29c385b38705a4268964bdfd;";
             conn.Open();
 
             Configuration = configuration;
@@ -103,7 +105,7 @@ namespace Caight
                 switch (cmdString[0].ToUpper())
                 {
                     case "INSERT":
-                        using (var cmd = new NpgsqlCommand($"INSERT INTO {cmdString[1]} VALUES('{cmdString[2]}');") { Connection = conn })
+                        using (var cmd = new OdbcCommand($"INSERT INTO {cmdString[1]} VALUES('{cmdString[2]}');") { Connection = conn })
                         {
                             await cmd.ExecuteNonQueryAsync();
                         }
