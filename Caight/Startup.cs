@@ -19,32 +19,19 @@ namespace Caight
 {
     public class Startup
     {
-        private string message = null;
+        private const string __PATH__ = "test.txt";
+
         public Startup(IConfiguration configuration)
         {
-            string path = "test.txt";
-            if (!File.Exists(path))
+            if (!File.Exists(__PATH__))
             {
-                File.Create(path).Close();
-                using (var stream = File.Open(path, FileMode.Open, FileAccess.Write))
+                File.Create(__PATH__).Close();
+                using (var stream = File.Open(__PATH__, FileMode.Open, FileAccess.Write))
                 {
                     var writer = new StreamWriter(stream);
                     writer.WriteLine(0);
                     writer.Flush();
                 }
-            }
-
-            using (var stream = File.Open(path, FileMode.Open, FileAccess.ReadWrite))
-            {
-                var reader = new StreamReader(stream);
-                int cnt = int.Parse(reader.ReadLine()) + 1;
-
-                stream.Seek(0, SeekOrigin.Begin);
-                var writer = new StreamWriter(stream);
-                writer.WriteLine(cnt);
-                writer.Flush();
-
-                message = cnt + "\0";
             }
 
             Configuration = configuration;
@@ -107,6 +94,20 @@ namespace Caight
 
         private async Task Response(HttpContext context, WebSocket socket)
         {
+            string message;
+            using (var stream = File.Open(__PATH__, FileMode.Open, FileAccess.ReadWrite))
+            {
+                var reader = new StreamReader(stream);
+                int cnt = int.Parse(reader.ReadLine()) + 1;
+
+                stream.Seek(0, SeekOrigin.Begin);
+                var writer = new StreamWriter(stream);
+                writer.WriteLine(cnt);
+                writer.Flush();
+
+                message = cnt + "\0";
+            }
+
             var buffer = new byte[1024 * 4];
             WebSocketReceiveResult result = null;// TODO: FIlesystem test
 
