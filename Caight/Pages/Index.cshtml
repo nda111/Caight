@@ -7,6 +7,7 @@
 
 @using System.Text;
 @using System.Net;
+@using System.Net.Sockets;
 @using System.Net.WebSockets;
 @using System.Threading;
 @using System.IO;
@@ -15,55 +16,6 @@
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 
-    @{
-        byte[] buffer = null;
-        string webSocketAddr = $"wss://{HttpContext.Request.Host}{HttpContext.Request.Path}ws";
-        <p>Host: @webSocketAddr</p>
 
-        <form asp-controller="String" asp-action="Reverse" method="post">
-            <input type="text" name="text" />
-            <br />
-            <input type="submit" value="Submit" />
-        </form>
-
-        try
-        {
-            ClientWebSocket client = new ClientWebSocket();
-            await client.ConnectAsync(new Uri(webSocketAddr), System.Threading.CancellationToken.None);
-
-            buffer = Encoding.UTF8.GetBytes("insert\0test\0this text\0");
-            await client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-            <p>Send</p>
-
-            await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            <p>Result: @Encoding.UTF8.GetString(buffer).Split('\0')[0]</p>
-
-            await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
-
-            //
-            //Thread.Sleep(5000);
-            //
-            //await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            //<br />
-            //<p>FileSystemTextResult: @Encoding.UTF8.GetString(buffer)</p>
-        }
-        catch (Exception e)
-        {
-            <h1>@e.GetType().Name</h1> <hr />
-            <table style="text-align:left">
-                <tr>
-                    <th>
-                        @e.Message
-                    </th>
-                </tr>
-                @foreach (var part in e.StackTrace.Split(new string[] { "at ", "in " }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    <tr>
-                        <td>@part</td>
-                    </tr>
-                }
-            </table>
-        }
-    }
 
 </div>
