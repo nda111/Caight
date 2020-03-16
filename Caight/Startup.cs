@@ -119,40 +119,31 @@ namespace Caight
 
         private async Task Response(HttpContext context, WebSocket socket)
         {
-            var buffer = new byte[1024 * 4];
-            WebSocketReceiveResult result = null;
+            WebSocketConnection conn = new WebSocketConnection(socket);
 
-            while (!socket.CloseStatus.HasValue)
+            while (!conn.WebSocket.CloseStatus.HasValue)
             {
-                result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                string[] cmdString = Encoding.UTF8.GetString(buffer).Split('\0');
-
-                switch (cmdString[0].ToUpper())
+                WebSocketReceiveResult result = await conn.ReceiveAsync();
+                switch (result.MessageType)
                 {
-                    case "INSERT":
-                        using (var cmd = new NpgsqlCommand($"INSERT INTO {cmdString[1]} VALUES('{cmdString[2]}');") { Connection = conn })
-                        {
-                            await cmd.ExecuteNonQueryAsync();
-                        }
+                    case WebSocketMessageType.Text:
+                        Console.WriteLine("T_Received: " + conn.TextMessage);
+                        await conn.SendTextAsync(conn.TextMessage);
+                        break;
 
-                        using (var memStream = new MemoryStream(buffer))
-                        {
-                            var writer = new StreamWriter(memStream);
-                            writer.Write("OK\0");
-                            writer.Flush();
-                        }
+                    case WebSocketMessageType.Binary:
+                        Console.WriteLine("B_Received: " + string.Join(", ", from bt in conn.BinaryMessage select bt.ToString()));
+                        await conn.SendBinaryAsync(conn.BinaryMessage);
+                        break;
 
-                        await socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                    case WebSocketMessageType.Close:
                         break;
 
                     default:
                         break;
                 }
-
-                result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             }
 
-            await socket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
             Console.WriteLine("Close");
         }
     }
