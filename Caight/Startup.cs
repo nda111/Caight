@@ -21,7 +21,7 @@ namespace Caight
 {
     public class Startup
     {
-        private NpgsqlConnection conn = new NpgsqlConnection();
+        private NpgsqlConnection dbConn = new NpgsqlConnection();
 
         public Startup(IConfiguration configuration)
         {
@@ -56,8 +56,8 @@ namespace Caight
                     "true"
                 },
             };
-            conn.ConnectionString = connBuilder.ToString();
-            conn.Open();
+            dbConn.ConnectionString = connBuilder.ToString();
+            dbConn.Open();
 
             Configuration = configuration;
         }
@@ -123,22 +123,48 @@ namespace Caight
 
             while (!conn.WebSocket.CloseStatus.HasValue)
             {
-                WebSocketReceiveResult result = await conn.ReceiveAsync();
-                switch (result.MessageType)
+                await conn.ReceiveAsync();
+                RequestId request = (RequestId)Methods.ByteArrayToInt(conn.BinaryMessage);
+                switch (request)
                 {
-                    case WebSocketMessageType.Text:
-                        Console.WriteLine("T_Received: " + conn.TextMessage);
-                        await conn.SendTextAsync(conn.TextMessage);
-                        break;
+                    case RequestId.EvaluateEmail:
+                        {
+                            await conn.ReceiveAsync();
+                            string email = conn.TextMessage;
 
-                    case WebSocketMessageType.Binary:
-                        Console.WriteLine("B_Received: " + string.Join(", ", from bt in conn.BinaryMessage select bt.ToString()));
-                        await conn.SendBinaryAsync(conn.BinaryMessage);
-                        break;
+                            using (var cmd = dbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"select (certified) from account where email='{email}';";
 
-                    case WebSocketMessageType.Close:
-                        break;
+                                ResponseId response;
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        reader.Read();
+                                        if (reader.GetBoolean(0))
+                                        {
+                                            response = ResponseId.CertifiedEmail;
+                                        }
+                                        else
+                                        {
+                                            response = ResponseId.RegisteredEmail;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        response = ResponseId.UnknownEmail;
+                                    }
+                                }
 
+                                await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
+                            }
+
+
+                            break;
+                        }
+
+                    case RequestId.Unknown:
                     default:
                         break;
                 }

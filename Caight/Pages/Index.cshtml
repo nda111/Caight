@@ -18,28 +18,9 @@
 
     <div style="text-align:left">
         @{
-                string uri = $"wss://{Request.Host}{Request.Path}ws";
+            string uri = $"wss://{Request.Host}{Request.Path}ws";
         }
         HOST: @uri
-
-        @{
-            ClientWebSocket client = new ClientWebSocket();
-            await client.ConnectAsync(new Uri(uri), CancellationToken.None);
-            WebSocketConnection conn = new WebSocketConnection(client);
-
-            await conn.SendTextAsync("Hello World!");
-            await conn.ReceiveAsync();
-        }
-        <br />
-        T_Message: @conn.TextMessage
-
-        @{
-            await conn.SendBinaryAsync(new byte[] { 0, 1, 2, 3, 4 });
-            await conn.ReceiveAsync();
-            await conn.CloseAsync();
-        }
-        <br />
-        B_Message: @(string.Join(", ", from bt in conn.BinaryMessage select bt.ToString()))
     </div>
 
 </div>
