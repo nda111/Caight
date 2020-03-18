@@ -201,6 +201,43 @@ namespace Caight
                             break;
                         }
 
+                    case RequestId.SignIn:
+                        {
+                            ResponseId response;
+
+                            await conn.ReceiveAsync();
+                            string[] args = conn.TextMessage.Split('\0');
+                            string email = args[0];
+                            string passwd = args[1];
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT (pw) FROM account WHERE email='{email}';";
+                                using var reader = cmd.ExecuteReader();
+                                if (reader.HasRows)
+                                {
+                                    passwd = Methods.HashPassword(passwd);
+                                    string dbPass = reader.GetString(0);
+
+                                    if (passwd == dbPass)
+                                    {
+                                        response = ResponseId.SignInOk;
+                                    }
+                                    else
+                                    {
+                                        response = ResponseId.SignInWrongPassword;
+                                    }
+                                }
+                                else
+                                {
+                                    response = ResponseId.SignInError;
+                                }
+                            }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
+                            break;
+                        }
+
                     case RequestId.Unknown:
                     default:
                         break;

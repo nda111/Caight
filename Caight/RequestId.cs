@@ -13,5 +13,7 @@ namespace Caight
         RegisterEmail = 1,
 
         VerifyEmailWebOnly = 2,
+
+        SignIn = 3,
     }
 }

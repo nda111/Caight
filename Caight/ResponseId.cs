@@ -18,5 +18,9 @@ namespace Caight
 
         VerifyOkWebOnly = 5,
         VerifyNoWebOnly = 6,
+
+        SignInOk = 7,
+        SignInWrongPassword = 8,
+        SignInError = 9,
     }
 }
