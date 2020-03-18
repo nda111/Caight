@@ -5,20 +5,13 @@
     ViewData["Title"] = "Home page";
 }
 
-@using System.Text;
-@using System.Net;
-@using System.Net.Sockets;
-@using System.Net.WebSockets;
-@using System.Threading;
-@using System.IO;
-
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 
     <div style="text-align:left">
         @{
-            string uri = $"wss://{Request.Host}{Request.Path}ws";
+            string uri = $"wss://{Request.Host}/ws";
         }
         HOST: @uri
     </div>

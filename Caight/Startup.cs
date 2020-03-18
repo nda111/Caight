@@ -28,9 +28,6 @@ namespace Caight
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-
-            DbConn.ConnectionString = configuration.GetValue<string>("ConnectionString");
-            DbConn.Open();
         }
 
         public IConfiguration Configuration { get; }
@@ -38,7 +35,14 @@ namespace Caight
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddRazorPages();
+            DbConn.ConnectionString = Configuration.GetValue<string>("ConnectionString");
+            DbConn.Open();
+
+            services.AddRazorPages()
+                .AddRazorPagesOptions(options =>
+                {
+                    options.Conventions.AddPageRoute("certification", "/certification/{h?}");
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -104,33 +108,31 @@ namespace Caight
                             await conn.ReceiveAsync();
                             string email = conn.TextMessage;
 
-                            using (var cmd = DbConn.CreateCommand())
-                            {
-                                cmd.CommandText = $"SELECT (certified) FROM account WHERE email='{email}';";
+                            using var cmd = DbConn.CreateCommand();
+                            cmd.CommandText = $"SELECT (certified) FROM account WHERE email='{email}';";
 
-                                ResponseId response;
-                                using (var reader = cmd.ExecuteReader())
+                            ResponseId response;
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                if (reader.HasRows)
                                 {
-                                    if (reader.HasRows)
+                                    reader.Read();
+                                    if (reader.GetBoolean(0))
                                     {
-                                        reader.Read();
-                                        if (reader.GetBoolean(0))
-                                        {
-                                            response = ResponseId.CertifiedEmail;
-                                        }
-                                        else
-                                        {
-                                            response = ResponseId.RegisteredEmail;
-                                        }
+                                        response = ResponseId.CertifiedEmail;
                                     }
                                     else
                                     {
-                                        response = ResponseId.UnknownEmail;
+                                        response = ResponseId.RegisteredEmail;
                                     }
                                 }
-
-                                await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
+                                else
+                                {
+                                    response = ResponseId.UnknownEmail;
+                                }
                             }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
                             break;
                         }
 
@@ -141,25 +143,23 @@ namespace Caight
                             args[1] = Methods.HashPassword(args[0], args[1], args[2]);
                             string certHash = Methods.CreateCertificationHash(args[0]);
 
-                            using (var cmd = DbConn.CreateCommand())
+                            using var cmd = DbConn.CreateCommand();
+                            cmd.CommandText =
+                                $"INSERT INTO account (email, pw, name) VALUES('{args[0]}', '{args[1]}', '{args[2]}');" +
+                                $"INSERT INTO cert_hash (email, hash) VALUES('{args[0]}', '{certHash}');";
+                            try
                             {
-                                cmd.CommandText = 
-                                    $"INSERT INTO account (email, pw, name) VALUES('{args[0]}', '{args[1]}', '{args[2]}');" + 
-                                    $"INSERT INTO cert_hash (email, hash) VALUES('{args[0]}', '{certHash}');";
-                                try
-                                {
-                                    cmd.ExecuteNonQuery();
-                                    string url = $"https://caight.herokuapp.com/certification?h={certHash}";
+                                cmd.ExecuteNonQuery();
+                                string url = $"https://caight.herokuapp.com/certification?h={certHash}";
 
-                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.RegisterOk));
+                                await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.RegisterOk));
 
-                                    var mail = new CertificationMailSender(args[0], url);
-                                    await mail.SendAsync(Configuration.GetValue<string>("MailApiKey"));
-                                }
-                                catch (NpgsqlException)
-                                {
-                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.RegisterNo));
-                                }
+                                var mail = new CertificationMailSender(args[0], url);
+                                await mail.SendAsync(Configuration.GetValue<string>("MailApiKey"));
+                            }
+                            catch (NpgsqlException)
+                            {
+                                await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.RegisterNo));
                             }
                             break;
                         }
@@ -175,19 +175,17 @@ namespace Caight
                             using (var cmd = DbConn.CreateCommand())
                             {
                                 cmd.CommandText = $"SELECT (email) FROM cert_hash WHERE hash='{hash}';";
-                                using (var reader = cmd.ExecuteReader())
+                                using var reader = cmd.ExecuteReader();
+                                if (reader.HasRows)
                                 {
-                                    if (reader.HasRows)
-                                    {
-                                        response = ResponseId.CertifyOk;
-                                        reader.Read();
+                                    response = ResponseId.CertifyOk;
+                                    reader.Read();
 
-                                        email = reader.GetString(0);
-                                    }
-                                    else
-                                    {
-                                        response = ResponseId.CertifyNo;
-                                    }
+                                    email = reader.GetString(0);
+                                }
+                                else
+                                {
+                                    response = ResponseId.CertifyNo;
                                 }
                             }
 

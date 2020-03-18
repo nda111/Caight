@@ -39,20 +39,16 @@ namespace Caight
             builder.Append("steak");
 
             byte[] buffer = Encoding.UTF8.GetBytes(builder.ToString());
-            using (var sha = System.Security.Cryptography.SHA256.Create())
-            {
-                byte[] hashedBytes = sha.ComputeHash(buffer);
-                return Byte256ToString(buffer, HexDigits);
-            }
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            byte[] hashedBytes = sha.ComputeHash(buffer);
+            return Byte256ToString(buffer, HexDigits);
         }
 
         internal static string CreateCertificationHash(string email)
         {
-            using (var sha = System.Security.Cryptography.SHA256.Create())
-            {
-                byte[] buffer = sha.ComputeHash(Encoding.UTF8.GetBytes(email + "cert"));
-                return Byte256ToString(buffer, HashDigits);
-            }
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            byte[] buffer = sha.ComputeHash(Encoding.UTF8.GetBytes(email + "cert"));
+            return Byte256ToString(buffer, HashDigits);
         }
 
         private static string Byte256ToString(byte[] bytes, string digits)
