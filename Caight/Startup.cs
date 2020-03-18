@@ -216,8 +216,9 @@ namespace Caight
                                 using var reader = cmd.ExecuteReader();
                                 if (reader.HasRows)
                                 {
-                                    passwd = Methods.HashPassword(passwd);
+                                    reader.Read();
                                     string dbPass = reader.GetString(0);
+                                    passwd = Methods.HashPassword(passwd);
 
                                     if (passwd == dbPass)
                                     {
