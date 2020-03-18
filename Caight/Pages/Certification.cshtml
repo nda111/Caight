@@ -27,12 +27,14 @@
         string email = conn.TextMessage;
 
         <center>
-            <p>@(email) is certified. <br /> Now you can use this account.</p>
+            <h6>@(email)' is certified.</h6>
+            <br /> 
+            <p>Now you can use your account.</p>
         </center>
     }
     else
     {
-        <h1>Unknwon Page</h1>
+        <h1>Unknown Page</h1>
     }
 
     await conn.CloseAsync();

@@ -41,7 +41,7 @@ namespace Caight
             services.AddRazorPages()
                 .AddRazorPagesOptions(options =>
                 {
-                    options.Conventions.AddPageRoute("/Certification", "/certification/{h?}");
+                    //options.Conventions.AddPageRoute("/Certification", "/certification/{h?}");
                 });
         }
 
@@ -189,6 +189,7 @@ namespace Caight
                                 }
                             }
 
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
                             if (response == ResponseId.CertifyOk)
                             {
                                 using (var cmd = DbConn.CreateCommand())
@@ -201,8 +202,6 @@ namespace Caight
 
                                 await conn.SendTextAsync(email);
                             }
-
-                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
                             break;
                         }
 

@@ -13,7 +13,7 @@ namespace Caight.Pages
 
         public void OnGet()
         {
-            Hash = Request.Query["q"];
+            Hash = Request.Query["h"];
         }
     }
 }
