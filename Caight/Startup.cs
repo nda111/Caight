@@ -16,50 +16,21 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using System.Net.Mail;
+using System.Net;
 
 namespace Caight
 {
     public class Startup
     {
-        private NpgsqlConnection dbConn = new NpgsqlConnection();
+        private readonly NpgsqlConnection DbConn = new NpgsqlConnection();
 
         public Startup(IConfiguration configuration)
         {
-            NpgsqlConnectionStringBuilder connBuilder = new NpgsqlConnectionStringBuilder()
-            {
-                {
-                    "Server",
-                    "ec2-54-80-184-43.compute-1.amazonaws.com"
-                },
-                {
-                    "Port",
-                    "5432"
-                },
-                {
-                    "Database",
-                    "da7sfef764j2vr"
-                },
-                {
-                    "Uid",
-                    "chwnhsjrvwjcmn"
-                },
-                {
-                    "Pwd",
-                    "27f3f0355524328a1608b7f408b39c45dc08686f29c385b38705a4268964bdfd"
-                },
-                {
-                    "SSL Mode",
-                    "Prefer"
-                },
-                {
-                    "Trust Server Certificate",
-                    "true"
-                },
-            };
-            dbConn.ConnectionString = connBuilder.ToString();
-            dbConn.Open();
-
             Configuration = configuration;
+
+            DbConn.ConnectionString = configuration.GetValue<string>("ConnectionString");
+            DbConn.Open();
         }
 
         public IConfiguration Configuration { get; }
@@ -125,6 +96,7 @@ namespace Caight
             {
                 await conn.ReceiveAsync();
                 RequestId request = (RequestId)Methods.ByteArrayToInt(conn.BinaryMessage);
+
                 switch (request)
                 {
                     case RequestId.EvaluateEmail:
@@ -132,9 +104,9 @@ namespace Caight
                             await conn.ReceiveAsync();
                             string email = conn.TextMessage;
 
-                            using (var cmd = dbConn.CreateCommand())
+                            using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"select (certified) from account where email='{email}';";
+                                cmd.CommandText = $"SELECT (certified) FROM account WHERE email='{email}';";
 
                                 ResponseId response;
                                 using (var reader = cmd.ExecuteReader())
@@ -159,8 +131,80 @@ namespace Caight
 
                                 await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
                             }
+                            break;
+                        }
 
+                    case RequestId.RegisterEmail:
+                        {
+                            await conn.ReceiveAsync();
+                            string[] args = conn.TextMessage.Split('\0');
+                            args[1] = Methods.HashPassword(args[0], args[1], args[2]);
+                            string certHash = Methods.CreateCertificationHash(args[0]);
 
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = 
+                                    $"INSERT INTO account (email, pw, name) VALUES('{args[0]}', '{args[1]}', '{args[2]}');" + 
+                                    $"INSERT INTO cert_hash (email, hash) VALUES('{args[0]}', '{certHash}');";
+                                try
+                                {
+                                    cmd.ExecuteNonQuery();
+                                    string url = $"https://caight.herokuapp.com/certification?h={certHash}";
+
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.RegisterOk));
+
+                                    var mail = new CertificationMailSender(args[0], url);
+                                    await mail.SendAsync(Configuration.GetValue<string>("MailApiKey"));
+                                }
+                                catch (NpgsqlException)
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.RegisterNo));
+                                }
+                            }
+                            break;
+                        }
+
+                    case RequestId.CertifyEmail:
+                        {
+                            ResponseId response;
+
+                            await conn.ReceiveAsync();
+                            string hash = conn.TextMessage;
+                            string email = null;
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT (email) FROM cert_hash WHERE hash='{hash}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        response = ResponseId.CertifyOk;
+                                        reader.Read();
+
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        response = ResponseId.CertifyNo;
+                                    }
+                                }
+                            }
+
+                            if (response == ResponseId.CertifyOk)
+                            {
+                                using (var cmd = DbConn.CreateCommand())
+                                {
+                                    cmd.CommandText =
+                                        $"DELETE FROM cert_hash WHERE email='{email}';" +
+                                        $"UPDATE account SET certified=true WHERE email='{email}'";
+                                    cmd.ExecuteNonQuery();
+                                }
+
+                                await conn.SendTextAsync(email);
+                            }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
                             break;
                         }
 

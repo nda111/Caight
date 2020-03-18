@@ -12,5 +12,11 @@ namespace Caight
         UnknownEmail = 0,
         RegisteredEmail = 1,
         CertifiedEmail = 2,
+
+        RegisterOk = 3,
+        RegisterNo = 4,
+
+        CertifyOk = 5,
+        CertifyNo = 6,
     }
 }

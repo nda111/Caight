@@ -1,0 +1,39 @@
+﻿@page "{h?}"
+@model Caight.Pages.CertificationModel
+@{
+    ViewData["Title"] = "Certification";
+}
+
+@using System.Net;
+@using System.Net.WebSockets;
+@using System.Threading;
+
+@{
+    string uri = $"wss://{Request.Host}/ws";
+
+    var socket = new ClientWebSocket();
+    await socket.ConnectAsync(new Uri(uri), CancellationToken.None);
+    var conn = new WebSocketConnection(socket);
+
+    await conn.SendBinaryAsync(Methods.IntToByteArray((int)RequestId.CertifyEmail));
+    await conn.SendTextAsync(Model.Hash);
+
+    await conn.ReceiveAsync();
+    ResponseId response = (ResponseId)Methods.ByteArrayToInt(conn.BinaryMessage);
+
+    if (response == ResponseId.CertifyOk)
+    {
+        await conn.ReceiveAsync();
+        string email = conn.TextMessage;
+
+        <center>
+            <p>@(email) is certified. <br /> Now you can use this account.</p>
+        </center>
+    }
+    else
+    {
+        <h1>Unknwon Page</h1>
+    }
+
+    await conn.CloseAsync();
+}
