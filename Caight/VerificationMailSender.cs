@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Caight
 {
-    public class CertificationMailSender
+    public class VerificationMailSender
     {
         public EmailAddress From { get; } = new EmailAddress("caightapp@gmail.com", "Caight");
 
@@ -18,7 +18,7 @@ namespace Caight
 
         public string Uri { get; set; } = null;
 
-        public CertificationMailSender(string to, string certificationUri)
+        public VerificationMailSender(string to, string certificationUri)
         {
             To = new EmailAddress(to);
             Uri = certificationUri;

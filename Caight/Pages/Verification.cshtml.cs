@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Caight.Pages
 {
-    public class CertificationModel : PageModel
+    public class VerificationModel : PageModel
     {
         public string Hash { get; set; } = null;
 

@@ -37,10 +37,10 @@ namespace Caight
             return Byte256ToString(buffer, HexDigits);
         }
 
-        internal static string CreateCertificationHash(string email)
+        internal static string CreateVertificationHash(string email)
         {
             using var sha = System.Security.Cryptography.SHA256.Create();
-            byte[] buffer = sha.ComputeHash(Encoding.UTF8.GetBytes(email + "cert"));
+            byte[] buffer = sha.ComputeHash(Encoding.UTF8.GetBytes(email + DateTime.Now.Ticks));
             return Byte256ToString(buffer, HashDigits);
         }
 

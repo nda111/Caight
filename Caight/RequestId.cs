@@ -12,6 +12,6 @@ namespace Caight
         EvaluateEmail = 0,
         RegisterEmail = 1,
 
-        CertifyEmail = 2,
+        VerifyEmailWebOnly = 2,
     }
 }

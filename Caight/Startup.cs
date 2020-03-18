@@ -38,11 +38,7 @@ namespace Caight
             DbConn.ConnectionString = Configuration.GetValue<string>("ConnectionString");
             DbConn.Open();
 
-            services.AddRazorPages()
-                .AddRazorPagesOptions(options =>
-                {
-                    //options.Conventions.AddPageRoute("/Certification", "/certification/{h?}");
-                });
+            services.AddRazorPages();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -109,7 +105,7 @@ namespace Caight
                             string email = conn.TextMessage;
 
                             using var cmd = DbConn.CreateCommand();
-                            cmd.CommandText = $"SELECT (certified) FROM account WHERE email='{email}';";
+                            cmd.CommandText = $"SELECT (verified) FROM account WHERE email='{email}';";
 
                             ResponseId response;
                             using (var reader = cmd.ExecuteReader())
@@ -119,7 +115,7 @@ namespace Caight
                                     reader.Read();
                                     if (reader.GetBoolean(0))
                                     {
-                                        response = ResponseId.CertifiedEmail;
+                                        response = ResponseId.VerifiedEmail;
                                     }
                                     else
                                     {
@@ -141,20 +137,20 @@ namespace Caight
                             await conn.ReceiveAsync();
                             string[] args = conn.TextMessage.Split('\0');
                             args[1] = Methods.HashPassword(args[1]);
-                            string certHash = Methods.CreateCertificationHash(args[0]);
+                            string verifyingHash = Methods.CreateVertificationHash(args[0]);
 
                             using var cmd = DbConn.CreateCommand();
                             cmd.CommandText =
                                 $"INSERT INTO account (email, pw, name) VALUES('{args[0]}', '{args[1]}', '{args[2]}');" +
-                                $"INSERT INTO cert_hash (email, hash) VALUES('{args[0]}', '{certHash}');";
+                                $"INSERT INTO verifying_hash (email, hash) VALUES('{args[0]}', '{verifyingHash}');";
                             try
                             {
                                 cmd.ExecuteNonQuery();
-                                string url = $"https://caight.herokuapp.com/certification?h={certHash}";
+                                string url = $"https://caight.herokuapp.com/verification?h={verifyingHash}";
 
                                 await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.RegisterOk));
 
-                                var mail = new CertificationMailSender(args[0], url);
+                                var mail = new VerificationMailSender(args[0], url);
                                 await mail.SendAsync(Configuration.GetValue<string>("MailApiKey"));
                             }
                             catch (NpgsqlException)
@@ -164,7 +160,7 @@ namespace Caight
                             break;
                         }
 
-                    case RequestId.CertifyEmail:
+                    case RequestId.VerifyEmailWebOnly:
                         {
                             ResponseId response;
 
@@ -174,29 +170,29 @@ namespace Caight
 
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT (email) FROM cert_hash WHERE hash='{hash}';";
+                                cmd.CommandText = $"SELECT (email) FROM verifying_hash WHERE hash='{hash}';";
                                 using var reader = cmd.ExecuteReader();
                                 if (reader.HasRows)
                                 {
-                                    response = ResponseId.CertifyOk;
+                                    response = ResponseId.VerifyOkWebOnly;
                                     reader.Read();
 
                                     email = reader.GetString(0);
                                 }
                                 else
                                 {
-                                    response = ResponseId.CertifyNo;
+                                    response = ResponseId.VerifyNoWebOnly;
                                 }
                             }
 
                             await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
-                            if (response == ResponseId.CertifyOk)
+                            if (response == ResponseId.VerifyOkWebOnly)
                             {
                                 using (var cmd = DbConn.CreateCommand())
                                 {
                                     cmd.CommandText =
-                                        $"DELETE FROM cert_hash WHERE email='{email}';" +
-                                        $"UPDATE account SET certified=true WHERE email='{email}'";
+                                        $"DELETE FROM verifying_hash WHERE email='{email}';" +
+                                        $"UPDATE account SET verified=true WHERE email='{email}'";
                                     cmd.ExecuteNonQuery();
                                 }
 

@@ -1,7 +1,7 @@
 ﻿@page "{h?}"
-@model Caight.Pages.CertificationModel
+@model Caight.Pages.VerificationModel
 @{
-    ViewData["Title"] = "Certification";
+    ViewData["Title"] = "Caight-Verification";
 }
 
 @using Caight;
@@ -15,20 +15,19 @@
     await socket.ConnectAsync(new Uri(uri), CancellationToken.None);
     var conn = new WebSocketConnection(socket);
 
-    await conn.SendBinaryAsync(Methods.IntToByteArray((int)RequestId.CertifyEmail));
+    await conn.SendBinaryAsync(Methods.IntToByteArray((int)RequestId.VerifyEmailWebOnly));
     await conn.SendTextAsync(Model.Hash);
 
     await conn.ReceiveAsync();
     ResponseId response = (ResponseId)Methods.ByteArrayToInt(conn.BinaryMessage);
 
-    if (response == ResponseId.CertifyOk)
+    if (response == ResponseId.VerifyOkWebOnly)
     {
         await conn.ReceiveAsync();
         string email = conn.TextMessage;
 
         <center>
-            <h6>@(email)' is certified.</h6>
-            <br /> 
+            <h4>@(email)' is verified.</h4>
             <p>Now you can use your account.</p>
         </center>
     }
