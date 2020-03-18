@@ -41,7 +41,7 @@ namespace Caight
             services.AddRazorPages()
                 .AddRazorPagesOptions(options =>
                 {
-                    options.Conventions.AddPageRoute("certification", "/certification/{h?}");
+                    options.Conventions.AddPageRoute("/Certification", "/certification/{h?}");
                 });
         }
 
