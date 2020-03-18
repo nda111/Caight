@@ -243,9 +243,9 @@ namespace Caight
                     default:
                         break;
                 }
-            }
 
-            Console.WriteLine("Close");
+                await conn.ReceiveAsync();
+            }
         }
     }
 }
