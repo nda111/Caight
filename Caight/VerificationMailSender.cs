@@ -27,14 +27,16 @@ namespace Caight
         public async Task<Response> SendAsync(string apiKey)
         {
             StringBuilder htmlBuilder = new StringBuilder();
-            htmlBuilder.Append("<h2>Certification</h2>");
+            htmlBuilder.Append("<center>");
+            htmlBuilder.Append("<h2>Verification</h2>");
             htmlBuilder.Append("<hr />");
-            htmlBuilder.Append("<p>Press <a href='");
+            htmlBuilder.Append("<h3>Press <a href='");
             htmlBuilder.Append(Uri);
-            htmlBuilder.Append("'>HERE</a> to certify your email.");
+            htmlBuilder.Append("'><b>HERE</b></a> to verify your email.</h3>");
+            htmlBuilder.Append("</center>");
 
             var client = new SendGridClient(apiKey);
-            var msg = MailHelper.CreateSingleEmail(From, To, "Caight certifiaction mail", "", htmlBuilder.ToString());
+            var msg = MailHelper.CreateSingleEmail(From, To, "Caight Verification", "", htmlBuilder.ToString());
             return await client.SendEmailAsync(msg);
         }
     }
