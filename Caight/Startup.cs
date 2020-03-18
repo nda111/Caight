@@ -140,7 +140,7 @@ namespace Caight
                         {
                             await conn.ReceiveAsync();
                             string[] args = conn.TextMessage.Split('\0');
-                            args[1] = Methods.HashPassword(args[0], args[1], args[2]);
+                            args[1] = Methods.HashPassword(args[1]);
                             string certHash = Methods.CreateCertificationHash(args[0]);
 
                             using var cmd = DbConn.CreateCommand();

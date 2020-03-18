@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Caight
 {
-    internal enum ResponseId : int
+    public enum ResponseId : int
     {
         Unknown = -1,
 

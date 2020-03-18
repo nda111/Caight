@@ -9,12 +9,12 @@ using System.Resources;
 
 namespace Caight
 {
-    internal static class Methods
+    public static class Methods
     {
         private const string HexDigits = "0123456789ABCDEF";
         private const string HashDigits = "0AD3EHI6MPQ7TU9Z";
 
-        internal static byte[] IntToByteArray(int i)
+        public static byte[] IntToByteArray(int i)
         {
             return new byte[]
             {
@@ -25,22 +25,15 @@ namespace Caight
             };
         }
 
-        internal static int ByteArrayToInt(byte[] b)
+        public static int ByteArrayToInt(byte[] b)
         {
             return b[0] | (b[1] << 8) | (b[1] << 16) | (b[1] << 24);
         }
 
-        internal static string HashPassword(string email, string password, string name)
+        internal static string HashPassword(string password)
         {
-            StringBuilder builder = new StringBuilder();
-            builder.Append(email);
-            builder.Append(password);
-            builder.Append(name);
-            builder.Append("steak");
-
-            byte[] buffer = Encoding.UTF8.GetBytes(builder.ToString());
             using var sha = System.Security.Cryptography.SHA256.Create();
-            byte[] hashedBytes = sha.ComputeHash(buffer);
+            byte[] buffer = sha.ComputeHash(Encoding.UTF8.GetBytes(password + "steak"));
             return Byte256ToString(buffer, HexDigits);
         }
 
