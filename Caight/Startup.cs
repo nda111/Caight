@@ -105,7 +105,7 @@ namespace Caight
                             string email = conn.TextMessage;
 
                             using var cmd = DbConn.CreateCommand();
-                            cmd.CommandText = $"SELECT (verified) FROM account WHERE email='{email}';";
+                            cmd.CommandText = $"SELECT verified FROM account WHERE email='{email}';";
 
                             ResponseId response;
                             using (var reader = cmd.ExecuteReader())
@@ -170,7 +170,7 @@ namespace Caight
 
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT (email) FROM verifying_hash WHERE hash='{hash}';";
+                                cmd.CommandText = $"SELECT email FROM verifying_hash WHERE hash='{hash}';";
                                 using var reader = cmd.ExecuteReader();
                                 if (reader.HasRows)
                                 {
@@ -215,20 +215,12 @@ namespace Caight
 
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT (pw, accnt_id, auth_token) FROM account WHERE email='{email}';";
+                                cmd.CommandText = $"SELECT pw, accnt_id FROM account WHERE email='{email}';";
                                 using var reader = cmd.ExecuteReader();
                                 if (reader.HasRows)
                                 {
                                     reader.Read();
-                                    string dbPass;
-                                    try
-                                    {
-                                        dbPass = reader.GetString(0);
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        dbPass = "46DA9DF3419F37083D79BC9FEA335183571D92A9CA9575272B7A758B69E11523";
-                                    }
+                                    string dbPass = reader.GetString(0);
                                     passwd = Methods.HashPassword(passwd);
 
                                     if (passwd == dbPass)

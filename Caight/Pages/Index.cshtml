@@ -5,6 +5,9 @@
     ViewData["Title"] = "Home page";
 }
 
+@using System.Net.WebSockets;
+@using System.Threading;
+
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
@@ -14,6 +17,29 @@
             string uri = $"wss://{Request.Host}/ws";
         }
         HOST: @uri
+
+        @{ 
+            ClientWebSocket socket = new ClientWebSocket();
+            await socket.ConnectAsync(new Uri(uri), CancellationToken.None);
+            WebSocketConnection conn = new WebSocketConnection(socket);
+
+            await conn.SendBinaryAsync(Methods.IntToByteArray((int)RequestId.SignIn));
+            await conn.SendTextAsync("nda111@naver.com\0Sigma97513!");
+
+            await conn.ReceiveAsync();
+            var resp = (ResponseId)Methods.ByteArrayToInt(conn.BinaryMessage);
+
+            await conn.ReceiveAsync();
+            var id = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+            await conn.ReceiveAsync();
+            var token = conn.TextMessage;
+
+            await conn.CloseAsync();
+
+            @id <br />
+            @token <br />
+        }
     </div>
 
 </div>
