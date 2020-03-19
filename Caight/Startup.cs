@@ -220,7 +220,15 @@ namespace Caight
                                 if (reader.HasRows)
                                 {
                                     reader.Read();
-                                    string dbPass = reader.GetString(0);
+                                    string dbPass;
+                                    try
+                                    {
+                                        dbPass = reader.GetString(0);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        dbPass = "46DA9DF3419F37083D79BC9FEA335183571D92A9CA9575272B7A758B69E11523";
+                                    }
                                     passwd = Methods.HashPassword(passwd);
 
                                     if (passwd == dbPass)
@@ -228,7 +236,7 @@ namespace Caight
                                         response = ResponseId.SignInOk;
 
                                         id = reader.GetInt64(1);
-                                        token = reader.GetString(2);
+                                        token = Methods.CreateAuthenticationToken(email);
                                     }
                                     else
                                     {
@@ -245,6 +253,12 @@ namespace Caight
 
                             if (response == ResponseId.SignInOk)
                             {
+                                using (var cmd = DbConn.CreateCommand())
+                                {
+                                    cmd.CommandText = $"UPDATE account SET auth_token='{token}' WHERE email='{email}';";
+                                    cmd.ExecuteNonQuery();
+                                }
+
                                 await conn.SendBinaryAsync(Methods.LongToByteArray(id));
                                 await conn.SendTextAsync(token);
                             }
