@@ -18,27 +18,23 @@
         }
         HOST: @uri
 
-        @{ 
+        @{
             ClientWebSocket socket = new ClientWebSocket();
             await socket.ConnectAsync(new Uri(uri), CancellationToken.None);
             WebSocketConnection conn = new WebSocketConnection(socket);
 
             await conn.SendBinaryAsync(Methods.IntToByteArray((int)RequestId.NewGroup));
-            await conn.SendTextAsync("nda111@naver.com\0Sigma97513!");
+            await conn.SendBinaryAsync(Methods.LongToByteArray(1));
+            await conn.SendTextAsync("0TZIEP36TIIZ0M9QTPDD6DU6TPPQEEUT3T6MU6DD7UMIQ77TA9HQ3DAQPAM7HT9T");
+            await conn.SendTextAsync("abcde\0ababab");
 
             await conn.ReceiveAsync();
             var resp = (ResponseId)Methods.ByteArrayToInt(conn.BinaryMessage);
 
-            await conn.ReceiveAsync();
-            var id = Methods.ByteArrayToLong(conn.BinaryMessage);
-
-            await conn.ReceiveAsync();
-            var token = conn.TextMessage;
-
             await conn.CloseAsync();
 
-            @id <br />
-            @token <br />
+            <br />
+            @resp.ToString()
         }
     </div>
 

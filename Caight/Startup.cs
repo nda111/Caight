@@ -293,7 +293,7 @@ namespace Caight
                                 {
                                     using (var cmd = DbConn.CreateCommand())
                                     {
-                                        cmd.CommandText = $"INSERT INTO managing_group (owner_email, name, password) VALUE ('{email}', '{groupValue[0]}', '{groupValue[1]}');";
+                                        cmd.CommandText = $"INSERT INTO managing_group (owner_email, name, pw) VALUES ('{email}', '{groupValue[0]}', '{Methods.HashPassword(groupValue[1])}');";
                                         cmd.ExecuteNonQuery();
                                     }
 
@@ -301,7 +301,7 @@ namespace Caight
                                 }
                                 catch (Exception)
                                 {
-                                    response = ResponseId.AddEntityNo;
+                                    response = ResponseId.AddEntityError;
                                 }
                             }
 
