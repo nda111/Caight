@@ -10,10 +10,16 @@ namespace Caight
         Unknown = -1,
 
         EvaluateEmail = 0,
+
         RegisterEmail = 1,
 
         VerifyEmailWebOnly = 2,
 
         SignIn = 3,
+
+        NewGroup = 4,
+        NewCat = 5,
+
+        DownloadEntity = 7,
     }
 }

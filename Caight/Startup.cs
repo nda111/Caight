@@ -257,6 +257,58 @@ namespace Caight
                             break;
                         }
 
+                    case RequestId.NewGroup:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            await conn.ReceiveAsync();
+                            string[] groupValue = conn.TextMessage.Split('\0');
+
+                            ResponseId response = ResponseId.Unknown;
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        response = ResponseId.AddEntityNo;
+                                    }
+                                }
+                            }
+
+                            if (response == ResponseId.Unknown)
+                            {
+                                try
+                                {
+                                    using (var cmd = DbConn.CreateCommand())
+                                    {
+                                        cmd.CommandText = $"INSERT INTO managing_group (owner_email, name, password) VALUE ('{email}', '{groupValue[0]}', '{groupValue[1]}');";
+                                        cmd.ExecuteNonQuery();
+                                    }
+
+                                    response = ResponseId.AddEntityOk;
+                                }
+                                catch (Exception)
+                                {
+                                    response = ResponseId.AddEntityNo;
+                                }
+                            }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
+
+                            break;
+                        }
+
                     case RequestId.Unknown:
                     default:
                         break;
