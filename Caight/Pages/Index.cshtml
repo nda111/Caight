@@ -23,7 +23,7 @@
             await socket.ConnectAsync(new Uri(uri), CancellationToken.None);
             WebSocketConnection conn = new WebSocketConnection(socket);
 
-            await conn.SendBinaryAsync(Methods.IntToByteArray((int)RequestId.SignIn));
+            await conn.SendBinaryAsync(Methods.IntToByteArray((int)RequestId.NewGroup));
             await conn.SendTextAsync("nda111@naver.com\0Sigma97513!");
 
             await conn.ReceiveAsync();

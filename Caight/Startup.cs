@@ -277,6 +277,7 @@ namespace Caight
                                 {
                                     if (reader.HasRows)
                                     {
+                                        reader.Read();
                                         email = reader.GetString(0);
                                     }
                                     else
