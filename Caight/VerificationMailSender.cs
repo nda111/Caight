@@ -28,7 +28,7 @@ namespace Caight
         {
             StringBuilder htmlBuilder = new StringBuilder();
             htmlBuilder.Append("<center>");
-            htmlBuilder.Append("<h2>Verification</h2>");
+            htmlBuilder.Append("<h1>Verification</h1>");
             htmlBuilder.Append("<hr />");
             htmlBuilder.Append("<h3>Press <a href='");
             htmlBuilder.Append(Uri);

@@ -137,7 +137,7 @@ namespace Caight
                             await conn.ReceiveAsync();
                             string[] args = conn.TextMessage.Split('\0');
                             args[1] = Methods.HashPassword(args[1]);
-                            string verifyingHash = Methods.CreateVertificationHash(args[0]);
+                            string verifyingHash = Methods.CreateAuthenticationToken(args[0]);
 
                             using var cmd = DbConn.CreateCommand();
                             cmd.CommandText =
@@ -210,9 +210,12 @@ namespace Caight
                             string email = args[0];
                             string passwd = args[1];
 
+                            long id = 0;
+                            string token = null;
+
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT (pw) FROM account WHERE email='{email}';";
+                                cmd.CommandText = $"SELECT (pw, accnt_id, auth_token) FROM account WHERE email='{email}';";
                                 using var reader = cmd.ExecuteReader();
                                 if (reader.HasRows)
                                 {
@@ -223,6 +226,9 @@ namespace Caight
                                     if (passwd == dbPass)
                                     {
                                         response = ResponseId.SignInOk;
+
+                                        id = reader.GetInt64(1);
+                                        token = reader.GetString(2);
                                     }
                                     else
                                     {
@@ -236,6 +242,12 @@ namespace Caight
                             }
 
                             await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
+
+                            if (response == ResponseId.SignInOk)
+                            {
+                                await conn.SendBinaryAsync(Methods.LongToByteArray(id));
+                                await conn.SendTextAsync(token);
+                            }
                             break;
                         }
 
