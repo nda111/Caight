@@ -7,6 +7,7 @@
 
 @using System.Net.WebSockets;
 @using System.Threading;
+@using System.Text;
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
@@ -19,22 +20,33 @@
         HOST: @uri
 
         @{
-            ClientWebSocket socket = new ClientWebSocket();
-            await socket.ConnectAsync(new Uri(uri), CancellationToken.None);
-            WebSocketConnection conn = new WebSocketConnection(socket);
-
-            await conn.SendBinaryAsync(Methods.IntToByteArray((int)RequestId.NewGroup));
-            await conn.SendBinaryAsync(Methods.LongToByteArray(1));
-            await conn.SendTextAsync("0TZIEP36TIIZ0M9QTPDD6DU6TPPQEEUT3T6MU6DD7UMIQ77TA9HQ3DAQPAM7HT9T");
-            await conn.SendTextAsync("abcde\0ababab");
-
-            await conn.ReceiveAsync();
-            var resp = (ResponseId)Methods.ByteArrayToInt(conn.BinaryMessage);
-
-            await conn.CloseAsync();
-
-            <br />
-            @resp.ToString()
+            //ClientWebSocket socket = new ClientWebSocket();
+            //await socket.ConnectAsync(new Uri(uri), CancellationToken.None);
+            //WebSocketConnection conn = new WebSocketConnection(socket);
+            //
+            //StringBuilder builder = new StringBuilder();
+            //builder.Append(3); builder.Append('\0');
+            //builder.Append("aaa"); builder.Append('\0');
+            //builder.Append(unchecked(0xFFAA55AA)); builder.Append('\0');
+            //builder.Append("TestCat"); builder.Append('\0');
+            //builder.Append(100000); builder.Append('\0');
+            //builder.Append(4); builder.Append('\0');
+            //builder.Append(0); builder.Append('\0');
+            //builder.Append(100000); builder.Append('\0');
+            //builder.Append(3.3);
+            //
+            //await conn.SendBinaryAsync(Methods.IntToByteArray((int)RequestId.NewCat));
+            //await conn.SendBinaryAsync(Methods.LongToByteArray(1));
+            //await conn.SendTextAsync("QHQ3UQPHDPUUTIA3E7ETTHQZ6QUQ9Q3EA0I90D6DZDHUZEU99PH39MIMPZ6IEPAM");
+            //await conn.SendTextAsync(builder.ToString());
+            //
+            //await conn.ReceiveAsync();
+            //var resp = (ResponseId)Methods.ByteArrayToInt(conn.BinaryMessage);
+            //
+            //await conn.CloseAsync();
+            //
+            //<br />
+            //@resp.ToString()
         }
     </div>
 

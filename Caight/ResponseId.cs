@@ -41,13 +41,14 @@ namespace Caight
          */
         AddEntityOk = 10,
         AddEntityNo = 11,
-        AddEntityError = 12,
+        AddEntityNotPw = 12,
+        AddEntityError = 13,
 
         /*
          * DownloadEntity = 7
          */
-        EntityGroup = 13,
-        EntityCat = 14,
-        EndOfEntity = 15,
+        EntityGroup = 14,
+        EntityCat = 15,
+        EndOfEntity = 16,
     }
 }

@@ -297,6 +297,23 @@ namespace Caight
                                         cmd.ExecuteNonQuery();
                                     }
 
+                                    int groupId = -1;
+                                    using (var cmd = DbConn.CreateCommand())
+                                    {
+                                        cmd.CommandText = $"SELECT max(id) FROM managing_group;";
+                                        using (var reader = cmd.ExecuteReader())
+                                        {
+                                            reader.Read();
+                                            groupId = reader.GetInt32(0);
+                                        }
+                                    }
+
+                                    using (var cmd = DbConn.CreateCommand())
+                                    {
+                                        cmd.CommandText = $"INSERT INTO participate (group_id, account_email) VALUES({groupId}, '{email}');";
+                                        cmd.ExecuteNonQuery();
+                                    }
+
                                     response = ResponseId.AddEntityOk;
                                 }
                                 catch (Exception)
@@ -307,6 +324,97 @@ namespace Caight
 
                             await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
 
+                            break;
+                        }
+
+                    case RequestId.NewCat:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            await conn.ReceiveAsync();
+                            string[] catValue = conn.TextMessage.Split('\0');
+
+                            int groupId = int.Parse(catValue[0]);
+                            string pw = Methods.HashPassword(catValue[1]);
+                            int color = unchecked((int)long.Parse(catValue[2]));
+                            string name = catValue[3];
+                            long birthday = long.Parse(catValue[4]);
+                            short gender = short.Parse(catValue[5]);
+                            int species = int.Parse(catValue[6]);
+                            long today = long.Parse(catValue[7]);
+                            float weight = float.Parse(catValue[8]);
+
+                            ResponseId response = ResponseId.Unknown;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (!reader.HasRows)
+                                    {
+                                        response = ResponseId.AddEntityNo;
+                                    }
+                                }
+                            }
+
+                            if (response == ResponseId.Unknown)
+                            {
+                                using (var cmd = DbConn.CreateCommand())
+                                {
+                                    cmd.CommandText = $"SELECT pw FROM managing_group WHERE id={groupId};";
+                                    using (var reader = cmd.ExecuteReader())
+                                    {
+                                        if (reader.HasRows)
+                                        {
+                                            reader.Read();
+                                            string groupPasswd = reader.GetString(0);
+
+                                            if (groupPasswd != pw)
+                                            {
+                                                response = ResponseId.AddEntityNotPw;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            response = ResponseId.AddEntityError;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (response == ResponseId.Unknown)
+                            {
+                                using (var cmd = DbConn.CreateCommand())
+                                {
+                                    cmd.CommandText = $"INSERT INTO cat (color, name, birth, gender, species) VALUES({color}, '{name}', {birthday}, {gender}, {species});";
+                                    cmd.ExecuteNonQuery();
+                                }
+
+                                int catId = -1;
+                                using (var cmd = DbConn.CreateCommand())
+                                {
+                                    cmd.CommandText = $"SELECT max(id) FROM cat;";
+                                    using var reader = cmd.ExecuteReader();
+                                    reader.Read();
+                                    catId = reader.GetInt32(0);
+                                }
+
+                                using (var cmd = DbConn.CreateCommand())
+                                {
+                                    cmd.CommandText = 
+                                        $"INSERT INTO managed (group_id, cat_id) VALUES({groupId}, {catId});" +
+                                        $"INSERT INTO weighs (cat_id, measured, weight) VALUES({catId}, {today}, {weight});";
+                                    cmd.ExecuteNonQuery();
+                                }
+
+                                response = ResponseId.AddEntityOk;
+                            }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
                             break;
                         }
 
