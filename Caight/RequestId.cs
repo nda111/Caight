@@ -20,6 +20,6 @@ namespace Caight
         NewGroup = 4,
         NewCat = 5,
 
-        DownloadEntity = 7,
+        DownloadEntity = 6,
     }
 }
