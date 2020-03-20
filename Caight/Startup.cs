@@ -477,7 +477,7 @@ namespace Caight
                                 List<Cat> catList = new List<Cat>();
                                 using (var cmd = DbConn.CreateCommand())
                                 {
-                                    cmd.CommandText = $"SELECT (id, name, birth, gender, species, color) FROM cat WHERE id IN (SELECT cat_id FROM managed WHERE group_id={groupId}) ORDER BY id;";
+                                    cmd.CommandText = $"SELECT id, name, birth, gender, species, color FROM cat WHERE id IN (SELECT cat_id FROM managed WHERE group_id={groupId}) ORDER BY id;";
                                     using var reader = cmd.ExecuteReader();
 
                                     while (reader.Read())
@@ -530,6 +530,7 @@ namespace Caight
                                     await conn.SendTextAsync(catJson);
                                 }
                             }
+
                             await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.EndOfEntity));
                             break;
                         }
