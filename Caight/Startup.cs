@@ -418,6 +418,121 @@ namespace Caight
                             break;
                         }
 
+                    case RequestId.DownloadEntity:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DownloadRejected));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            var groups = new List<CatGroup>();
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT id, name, owner_email FROM managing_group WHERE id IN (SELECT group_id FROM participate WHERE account_email='{email}');";
+                                using var reader = cmd.ExecuteReader();
+
+                                if (reader.HasRows)
+                                {
+                                    while (reader.Read())
+                                    {
+                                        int id = reader.GetInt32(0);
+                                        string name = reader.GetString(1);
+                                        string owner = reader.GetString(2);
+
+                                        groups.Add(new CatGroup(id, name, owner));
+                                    }
+                                }
+                                else
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.EndOfEntity));
+                                    break;
+                                }
+                            }
+
+                            var entries = new Dictionary<CatGroup, List<Cat>>();
+                            foreach (var group in groups)
+                            {
+                                int groupId = group.Id;
+
+                                List<Cat> catList = new List<Cat>();
+                                using (var cmd = DbConn.CreateCommand())
+                                {
+                                    cmd.CommandText = $"SELECT (id, name, birth, gender, species, color) FROM cat WHERE id IN (SELECT cat_id FROM managed WHERE group_id={groupId}) ORDER BY id;";
+                                    using var reader = cmd.ExecuteReader();
+
+                                    while (reader.Read())
+                                    {
+                                        int id = reader.GetInt32(0);
+                                        string name = reader.GetString(1);
+                                        long birth = reader.GetInt64(2);
+                                        short gender = reader.GetInt16(3);
+                                        int species = reader.GetInt32(4);
+                                        int color = reader.GetInt32(5);
+
+                                        catList.Add(new Cat(id, color, name, birth, gender, species, null));
+                                    }
+                                }
+
+                                foreach (var cat in catList)
+                                {
+                                    int catId = cat.Id;
+                                    var weights = new SortedDictionary<long, float>();
+                                    using (var cmd = DbConn.CreateCommand())
+                                    {
+                                        cmd.CommandText = $"SELECT measured, weight FROM weighs WHERE cat_id={catId};";
+                                        using var reader = cmd.ExecuteReader();
+
+                                        while (reader.Read())
+                                        {
+                                            long when = reader.GetInt64(0);
+                                            float weight = reader.GetFloat(1);
+
+                                            weights.Add(when, weight);
+                                        }
+                                    }
+
+                                    cat.Weights = weights;
+                                }
+
+                                entries.Add(group, catList);
+                            }
+
+                            foreach (var entry in entries)
+                            {
+                                string groupJson = entry.Key.ToJsonObject().ToString();
+                                await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.EntityGroup));
+                                await conn.SendTextAsync(groupJson);
+
+                                foreach (var cat in entry.Value)
+                                {
+                                    string catJson = cat.ToJsonObject().ToString();
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.EntityCat));
+                                    await conn.SendTextAsync(catJson);
+                                }
+                            }
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.EndOfEntity));
+                            break;
+                        }
+
                     case RequestId.Unknown:
                     default:
                         break;

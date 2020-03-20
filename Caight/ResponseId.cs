@@ -45,10 +45,11 @@ namespace Caight
         AddEntityError = 13,
 
         /*
-         * DownloadEntity = 7
+         * DownloadEntity = 6
          */
         EntityGroup = 14,
         EntityCat = 15,
         EndOfEntity = 16,
+        DownloadRejected = 17,
     }
 }
