@@ -211,11 +211,12 @@ namespace Caight
                             string passwd = args[1];
 
                             long id = 0;
+                            string name = null;
                             string token = null;
 
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT pw, accnt_id FROM account WHERE email='{email}';";
+                                cmd.CommandText = $"SELECT pw, accnt_id, name FROM account WHERE email='{email}';";
                                 using var reader = cmd.ExecuteReader();
                                 if (reader.HasRows)
                                 {
@@ -229,6 +230,7 @@ namespace Caight
 
                                         id = reader.GetInt64(1);
                                         token = Methods.CreateAuthenticationToken(email);
+                                        name = reader.GetString(2);
                                     }
                                     else
                                     {
@@ -253,6 +255,7 @@ namespace Caight
 
                                 await conn.SendBinaryAsync(Methods.LongToByteArray(id));
                                 await conn.SendTextAsync(token);
+                                await conn.SendTextAsync(name);
                             }
                             break;
                         }
