@@ -51,5 +51,11 @@ namespace Caight
         EntityCat = 15,
         EndOfEntity = 16,
         DownloadRejected = 17,
+
+        /*
+         * ChangeName = 7
+         */
+         ChangeNameOk = 18,
+         ChangeNameNo = 19,
     }
 }

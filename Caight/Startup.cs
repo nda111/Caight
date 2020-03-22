@@ -538,6 +538,55 @@ namespace Caight
                             break;
                         }
 
+                    case RequestId.ChangeName:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            await conn.ReceiveAsync();
+                            string newName = conn.TextMessage;
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        email = reader.GetString(0);
+                                        reader.Read();
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ChangeNameNo));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"UPDATE account SET name='{newName}' WHERE email='{email}';";
+
+                                try
+                                {
+                                    cmd.ExecuteNonQuery();
+                                }
+                                catch (Exception e)
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ChangeNameNo));
+                                    break;
+                                }
+                            }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ChangeNameOk));
+                            break;
+                        }
+
                     case RequestId.Unknown:
                     default:
                         break;
