@@ -557,8 +557,8 @@ namespace Caight
                                 {
                                     if (reader.HasRows)
                                     {
-                                        email = reader.GetString(0);
                                         reader.Read();
+                                        email = reader.GetString(0);
                                     }
                                     else
                                     {
@@ -576,7 +576,7 @@ namespace Caight
                                 {
                                     cmd.ExecuteNonQuery();
                                 }
-                                catch (Exception e)
+                                catch (Exception)
                                 {
                                     await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ChangeNameNo));
                                     break;
