@@ -21,5 +21,7 @@ namespace Caight
         NewCat = 5,
 
         DownloadEntity = 6,
+
+        ChangeName = 7,
     }
 }
