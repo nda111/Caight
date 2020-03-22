@@ -576,7 +576,7 @@ namespace Caight
                                 {
                                     cmd.ExecuteNonQuery();
                                 }
-                                catch (Exception)
+                                catch
                                 {
                                     await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ChangeNameNo));
                                     break;
@@ -584,6 +584,53 @@ namespace Caight
                             }
 
                             await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ChangeNameOk));
+                            break;
+                        }
+
+                    case RequestId.Logout:
+                        {
+
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        reader.Read();
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.LogoutNo));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"UPDATE account SET auth_token=null WHERE email='{email}';";
+
+                                try
+                                {
+                                    cmd.ExecuteNonQuery();
+                                }
+                                catch
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.LogoutNo));
+                                    break;
+                                }
+                            }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.LogoutOk));
                             break;
                         }
 

@@ -23,5 +23,7 @@ namespace Caight
         DownloadEntity = 6,
 
         ChangeName = 7,
+
+        Logout = 8,
     }
 }

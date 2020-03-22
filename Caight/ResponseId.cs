@@ -57,5 +57,11 @@ namespace Caight
          */
          ChangeNameOk = 18,
          ChangeNameNo = 19,
+
+        /*
+         * Logout = 8
+         */
+         LogoutOk = 20,
+         LogoutNo = 21,
     }
 }
