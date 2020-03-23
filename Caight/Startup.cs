@@ -753,6 +753,7 @@ namespace Caight
                                 using var reader = cmd.ExecuteReader();
                                 if (reader.HasRows)
                                 {
+                                    reader.Read();
                                     email = reader.GetString(0);
                                 }
                                 else
