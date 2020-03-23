@@ -85,5 +85,11 @@ namespace Caight
         ResetPasswordConfirmNoWebOnly = 29,
         ResetPasswordConfirmErrorWebOnly = 30,
 
+        /*
+         * DeleteAccount = 12
+         */
+         DeleteAccountOk = 31,
+         DeleteAccountNo = 32,
+
     }
 }

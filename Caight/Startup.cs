@@ -591,7 +591,6 @@ namespace Caight
 
                     case RequestId.Logout:
                         {
-
                             await conn.ReceiveAsync();
                             long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
 
@@ -782,6 +781,52 @@ namespace Caight
                             {
                                 await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordConfirmNoWebOnly));
                                 break;
+                            }
+                        }
+
+                    case RequestId.DeleteAccount:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        reader.Read();
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DeleteAccountNo));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"DELETE FROM account WHERE email='{email}';";
+
+                                try
+                                {
+                                    cmd.ExecuteNonQuery();
+
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DeleteAccountOk));
+                                    break;
+                                }
+                                catch
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DeleteAccountNo));
+                                    break;
+                                }
                             }
                         }
 
