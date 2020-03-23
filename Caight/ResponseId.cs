@@ -55,13 +55,35 @@ namespace Caight
         /*
          * ChangeName = 7
          */
-         ChangeNameOk = 18,
-         ChangeNameNo = 19,
+        ChangeNameOk = 18,
+        ChangeNameNo = 19,
 
         /*
          * Logout = 8
          */
-         LogoutOk = 20,
-         LogoutNo = 21,
+        LogoutOk = 20,
+        LogoutNo = 21,
+
+        /*
+         * RequestResetPasswordUri = 9
+         */
+        ResetPasswordUriCreated = 22,
+        ResetPasswordUriError = 23,
+
+        /*
+         * ResetPasswordWebOnly = 10
+         */
+        ResetPasswordPageOkWebOnly = 24,
+        ResetPasswordPageExpiredWebOnly = 25,
+        ResetPasswordPageUsedWebOnly = 26,
+        ResetPasswordPageNoWebOnly = 27,
+
+        /*
+         * ResetPasswordConfirmWebOnly = 11
+         */
+        ResetPasswordConfirmOkWebOnly = 28,
+        ResetPasswordConfirmNoWebOnly = 29,
+        ResetPasswordConfirmErrorWebOnly = 30,
+
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -148,10 +149,10 @@ namespace Caight
                                 cmd.ExecuteNonQuery();
                                 string url = $"https://caight.herokuapp.com/verification?h={verifyingHash}";
 
-                                await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.RegisterOk));
+                                var mail = new MailSender(args[0], url);
+                                await mail.SendVerificationMailAsync(Configuration.GetValue<string>("MailApiKey"));
 
-                                var mail = new VerificationMailSender(args[0], url);
-                                await mail.SendAsync(Configuration.GetValue<string>("MailApiKey"));
+                                await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.RegisterOk));
                             }
                             catch (NpgsqlException)
                             {
@@ -192,7 +193,8 @@ namespace Caight
                                 {
                                     cmd.CommandText =
                                         $"DELETE FROM verifying_hash WHERE email='{email}';" +
-                                        $"UPDATE account SET verified=true WHERE email='{email}'";
+                                        $"UPDATE account SET verified=true WHERE email='{email};'" +
+                                        $"INSERT INTO reset_password (email) VALUES ('{email}');";
                                     cmd.ExecuteNonQuery();
                                 }
 
@@ -614,7 +616,7 @@ namespace Caight
                                     }
                                 }
                             }
-
+                            
                             using (var cmd = DbConn.CreateCommand())
                             {
                                 cmd.CommandText = $"UPDATE account SET auth_token=null WHERE email='{email}';";
@@ -632,6 +634,163 @@ namespace Caight
 
                             await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.LogoutOk));
                             break;
+                        }
+
+                    case RequestId.RequestResetPasswordUri:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        reader.Read();
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordUriError));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            long expireDue = DateTime.Now.AddMinutes(10).Ticks;
+                            string hash = Methods.CreateAuthenticationToken(email + expireDue);
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"INSERT INTO reset_password (email, expire_due, hash) VALUES ('{email}', {expireDue}, '{hash}');";
+                                try
+                                {
+                                    cmd.ExecuteNonQuery();
+                                }
+                                catch
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordUriError));
+                                    break;
+                                }
+                            }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordUriCreated)); 
+
+                            string url = $"https://caight.herokuapp.com/resetpassword/{hash}";
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.RegisterOk));
+
+                            var mail = new MailSender(email, url);
+                            await mail.SendResetPasswordMailAsync(Configuration.GetValue<string>("MailApiKey"));
+                            break;
+                        }
+
+                    case RequestId.ResetPasswordWebOnly:
+                        {
+                            await conn.ReceiveAsync();
+                            string hash = conn.TextMessage;
+
+                            ResponseId response;
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email, expire_due, used FROM reset_password WHERE hash='{hash}';";
+
+                                using var reader = cmd.ExecuteReader();
+                                if (reader.HasRows)
+                                {
+                                    reader.Read();
+
+                                    bool used = reader.GetBoolean(2);
+                                    long now = DateTime.Now.Ticks;
+                                    long expireDue = reader.GetInt64(1);
+
+                                    if (now >= expireDue)
+                                    {
+                                        response = ResponseId.ResetPasswordPageExpiredWebOnly;
+                                    }
+                                    else if (used)
+                                    {
+                                        response = ResponseId.ResetPasswordPageUsedWebOnly;
+                                    }
+                                    else
+                                    {
+                                        email = reader.GetString(0);
+                                        response = ResponseId.ResetPasswordPageOkWebOnly;
+                                    }
+                                }
+                                else
+                                {
+                                    response = ResponseId.ResetPasswordPageNoWebOnly;
+                                }
+                            }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)response));
+                            if (response == ResponseId.ResetPasswordPageOkWebOnly)
+                            {
+                                await conn.SendTextAsync(email);
+                            }
+                            break;
+                        }
+
+                    case RequestId.ResetPasswordConfirmWebOnly:
+                        {
+                            await conn.ReceiveAsync();
+                            string hash = conn.TextMessage;
+
+                            await conn.ReceiveAsync();
+                            string password = conn.TextMessage;
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM reset_password WHERE hash='{hash}';";
+
+                                using var reader = cmd.ExecuteReader();
+                                if (reader.HasRows)
+                                {
+                                    email = reader.GetString(0);
+                                }
+                                else
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordConfirmNoWebOnly));
+                                    break;
+                                }
+                            }
+
+                            const string PasswordPattern = "((?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[A-Z]).{8,})";
+                            var regex = new Regex(PasswordPattern);
+                            if (regex.Match(password).Success)
+                            {
+                                password = Methods.HashPassword(password);
+                                using (var cmd = DbConn.CreateCommand())
+                                {
+                                    cmd.CommandText =
+                                        $"UPDATE account SET pw='{password}' WHERE email='{email}';" +
+                                        $"UPDATE reset_password SET used=true WHERE hash='{hash}';";
+
+                                    try
+                                    {
+                                        cmd.ExecuteNonQuery();
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordConfirmOkWebOnly));
+                                        break;
+                                    }
+                                    catch
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordConfirmErrorWebOnly));
+                                        break;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordConfirmNoWebOnly));
+                                break;
+                            }
                         }
 
                     case RequestId.Unknown:

@@ -25,5 +25,11 @@ namespace Caight
         ChangeName = 7,
 
         Logout = 8,
+
+        RequestResetPasswordUri = 9,
+
+        ResetPasswordWebOnly = 10,
+
+        ResetPasswordConfirmWebOnly = 11,
     }
 }
