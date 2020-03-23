@@ -193,8 +193,7 @@ namespace Caight
                                 {
                                     cmd.CommandText =
                                         $"DELETE FROM verifying_hash WHERE email='{email}';" +
-                                        $"UPDATE account SET verified=true WHERE email='{email};'" +
-                                        $"INSERT INTO reset_password (email) VALUES ('{email}');";
+                                        $"UPDATE account SET verified=true WHERE email='{email};'";
                                     cmd.ExecuteNonQuery();
                                 }
 
