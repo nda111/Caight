@@ -12,9 +12,9 @@ namespace Caight
         public string Hash { get; private set; } = null;
         public string Password { get; private set; } = null;
 
-        public void OnGet(string hash)
+        public void OnGet(string h)
         {
-            Hash = hash;
+            Hash = h;
             Password = Request.Query["p"];
         }
     }

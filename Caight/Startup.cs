@@ -667,7 +667,9 @@ namespace Caight
                             string hash = Methods.CreateAuthenticationToken(email + expireDue);
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"INSERT INTO reset_password (email, expire_due, hash) VALUES ('{email}', {expireDue}, '{hash}');";
+                                cmd.CommandText = 
+                                    $"DELETE FROM reset_password WHERE email='{email}';" + 
+                                    $"INSERT INTO reset_password (email, expire_due, hash) VALUES ('{email}', {expireDue}, '{hash}');";
                                 try
                                 {
                                     cmd.ExecuteNonQuery();
@@ -682,8 +684,6 @@ namespace Caight
                             await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordUriCreated)); 
 
                             string url = $"https://caight.herokuapp.com/resetpassword/{hash}";
-                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.RegisterOk));
-
                             var mail = new MailSender(email, url);
                             await mail.SendResetPasswordMailAsync(Configuration.GetValue<string>("MailApiKey"));
                             break;
