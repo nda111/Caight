@@ -639,23 +639,14 @@ namespace Caight
                     case RequestId.RequestResetPasswordUri:
                         {
                             await conn.ReceiveAsync();
-                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+                            string email = conn.TextMessage;
 
-                            await conn.ReceiveAsync();
-                            string token = conn.TextMessage;
-
-                            string email = null;
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                cmd.CommandText = $"SELECT email FROM account WHERE email='{email}';";
                                 using (var reader = cmd.ExecuteReader())
                                 {
-                                    if (reader.HasRows)
-                                    {
-                                        reader.Read();
-                                        email = reader.GetString(0);
-                                    }
-                                    else
+                                    if (!reader.HasRows)
                                     {
                                         await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordUriError));
                                         break;
