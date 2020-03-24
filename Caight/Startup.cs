@@ -796,7 +796,7 @@ namespace Caight
                             string email = null;
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}' AND NOT IN (SELECT owner_email FROM managing_group);";
                                 using (var reader = cmd.ExecuteReader())
                                 {
                                     if (reader.HasRows)
@@ -814,7 +814,9 @@ namespace Caight
 
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"DELETE FROM account WHERE email='{email}';";
+                                cmd.CommandText = 
+                                    $"DELETE FROM account WHERE email='{email}';" + 
+                                    $"DELETE FROM participate WHERE account_email='{email}'";
 
                                 try
                                 {
@@ -1001,6 +1003,10 @@ namespace Caight
                                 {
                                     cmd.CommandText = $"UPDATE managing_group SET {string.Join(',', updateList.ToArray())} WHERE id={id};";
                                     await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UpdateGroupOk));
+
+                                    throw new Exception(cmd.CommandText);
+
+
                                     break;
                                 }
                                 catch
