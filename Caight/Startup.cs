@@ -986,7 +986,7 @@ namespace Caight
                             }
                             if (json.TryGetValue("password", out temp))
                             {
-                                updateList.Add($"pw='{temp.ToObject<string>()}'");
+                                updateList.Add($"pw='{Methods.HashPassword(temp.ToObject<string>())}'");
                             }
                             if (json.TryGetValue("locked", out temp))
                             {
