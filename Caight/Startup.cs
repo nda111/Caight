@@ -1056,7 +1056,7 @@ namespace Caight
                             using (var cmd = DbConn.CreateCommand())
                             {
                                 cmd.CommandText = $"SELECT count(account_email) FROM participate WHERE group_id={groupId};";
-                                memberCount = (int)cmd.ExecuteScalar();
+                                memberCount = int.Parse(cmd.ExecuteScalar().ToString());
                             }
 
                             if (memberCount == 1)
