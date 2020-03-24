@@ -41,5 +41,7 @@ namespace Caight
         UpdateGroup = 15,
 
         DropGroup = 16,
+
+        WithdrawGroup = 17,
     }
 }

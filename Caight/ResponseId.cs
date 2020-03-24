@@ -115,8 +115,14 @@ namespace Caight
         /*
          * DropGroup = 16
          */
-         DropGroupOk = 42,
-         DropGroupMemberExists = 43,
-         DropGroupError = 44,
+        DropGroupOk = 42,
+        DropGroupMemberExists = 43,
+        DropGroupError = 44,
+
+        /*
+         * OutGroup = 17
+         */
+        WithdrawGroupOk = 45,
+        WithdrawGroupError = 46,
     }
 }

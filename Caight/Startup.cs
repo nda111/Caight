@@ -1082,6 +1082,64 @@ namespace Caight
                             break;
                         }
 
+                    case RequestId.WithdrawGroup:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            await conn.ReceiveAsync();
+                            int groupId = Methods.ByteArrayToInt(conn.BinaryMessage);
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        reader.Read();
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.WithdrawGroupError));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT id FROM managing_group WHERE id={groupId} AND owner_email='{email}';";
+
+                                using var reader = cmd.ExecuteReader();
+                                if (reader.HasRows)
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.WithdrawGroupError));
+                                    break;
+                                }
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"DELETE FROM participate WHERE group_id={groupId} AND account_email='{email}';";
+                                try
+                                {
+                                    cmd.ExecuteNonQuery();
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.WithdrawGroupOk));
+                                }
+                                catch
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.WithdrawGroupError));
+                                }
+                            }
+                            break;
+                        }
+
                     case RequestId.Unknown:
                     default:
                         break;
