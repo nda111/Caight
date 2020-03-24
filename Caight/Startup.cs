@@ -814,9 +814,7 @@ namespace Caight
 
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText =
-                                    $"DELETE FROM participate WHERE account_email='{email}';" +
-                                    $"DELETE FROM account WHERE email='{email}';";
+                                cmd.CommandText = $"DELETE FROM account WHERE email='{email}';";
 
                                 try
                                 {
@@ -1065,19 +1063,16 @@ namespace Caight
                                 {
                                     using (var cmd = DbConn.CreateCommand())
                                     {
-                                        cmd.CommandText =
-                                            $"DELETE FROM participate WHERE group_id={groupId};" +
-                                            $"DELETE FROM managing_group WHERE id={groupId};";
+                                        cmd.CommandText = $"DELETE FROM managing_group WHERE id={groupId};";
 
                                         cmd.ExecuteNonQuery();
                                     }
 
                                     await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropGroupOk));
                                 }
-                                catch (Exception e)
+                                catch (Exception)
                                 {
                                     await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropGroupError));
-                                    throw e;
                                 }
                             }
                             else
