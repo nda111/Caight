@@ -857,13 +857,14 @@ namespace Caight
                                 }
                             }
 
-                            string groupId = groupValue[0];
+                            int groupId = HexStringToInt32(groupValue[0]);
+                            int.TryParse(groupValue[0], out groupId);
                             string password = Methods.HashPassword(groupValue[1]);
                             bool joinable = false;
                             bool passwordMatches = false;
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT password, joinable FROM managing_group WHERE id={groupId};";
+                                cmd.CommandText = $"SELECT pw, joinable FROM managing_group WHERE id={groupId};";
 
                                 using var reader = cmd.ExecuteReader();
                                 if (reader.HasRows)
@@ -893,7 +894,7 @@ namespace Caight
 
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"INSERT INTO participate (group_id, account_email) VALUES ({groupId}, '{email}');";
+                                cmd.CommandText = $"INSERT INTO participate (group_id, account_email) VALUES ({groupId}, '{email}');";  
                                 try
                                 {
                                     cmd.ExecuteNonQuery();
@@ -915,6 +916,18 @@ namespace Caight
                 }
 
                 await conn.ReceiveAsync();
+            }
+        }
+
+        private int HexStringToInt32(this string str)
+        {
+            try
+            {
+                return Convert.ToInt32(str, 16);
+            }
+            catch (FormatException)
+            {
+                return -1;
             }
         }
     }
