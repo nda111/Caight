@@ -1074,9 +1074,10 @@ namespace Caight
 
                                     await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropGroupOk));
                                 }
-                                catch
+                                catch (Exception e)
                                 {
                                     await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropGroupError));
+                                    throw e;
                                 }
                             }
                             else
