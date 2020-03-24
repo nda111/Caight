@@ -9,9 +9,10 @@ namespace Caight
 {
     public sealed class CatGroup
     {
-        public const string __JSON_KEY_GROUP_ID__ = "group_id";
-        public const string __JSON_KEY_GROUP_NAME__ = "group_name";
-        public const string __JSON_KEY_GROUP_OWNER__ = "group_owner";
+        public const string JsonKeyGroupId = "group_id";
+        public const string JsonKeyGroupName = "group_name";
+        public const string JsonKeyGroupOwner = "group_owner";
+        public const string JsonKeyGroupLocked = "group_locked";
 
         public int Id { get; private set; } = -1;
 
@@ -19,31 +20,36 @@ namespace Caight
 
         public string Owner { get; private set; } = null;
 
+        public bool Locked { get; private set; } = false;
+
         private CatGroup() { }
 
-        public CatGroup(int id, string name, string owner)
+        public CatGroup(int id, string name, string owner, bool locked)
         {
             Id = id;
             Name = name;
             Owner = owner;
+            Locked = locked;
         }
 
         public JObject ToJsonObject()
         {
             JObject json = new JObject();
 
-            json.Add(__JSON_KEY_GROUP_ID__, Id);
-            json.Add(__JSON_KEY_GROUP_NAME__, Name);
-            json.Add(__JSON_KEY_GROUP_OWNER__, Owner);
+            json.Add(JsonKeyGroupId, Id);
+            json.Add(JsonKeyGroupName, Name);
+            json.Add(JsonKeyGroupOwner, Owner);
+            json.Add(JsonKeyGroupLocked, Locked);
 
             return json;
         }
         public static CatGroup parseJson(JObject json)
         {
             CatGroup group = new CatGroup();
-            group.Id = json.GetValue(__JSON_KEY_GROUP_ID__).ToObject<int>();
-            group.Name = json.GetValue(__JSON_KEY_GROUP_NAME__).ToObject<string>();
-            group.Owner = json.GetValue(__JSON_KEY_GROUP_OWNER__).ToObject<string>();
+            group.Id = json.GetValue(JsonKeyGroupId).ToObject<int>();
+            group.Name = json.GetValue(JsonKeyGroupName).ToObject<string>();
+            group.Owner = json.GetValue(JsonKeyGroupOwner).ToObject<string>();
+            group.Locked = json.GetValue(JsonKeyGroupLocked).ToObject<bool>();
 
             return group;
         }

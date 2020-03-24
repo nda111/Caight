@@ -99,5 +99,17 @@ namespace Caight
         JoinGroupWrongPassword = 35,
         JoinGroupRejected = 36,
         JoinGroupError = 37,
+
+        /*
+         * DownloadMember = 14
+         */
+         DownloadMemberError = 38,
+         EndOfMember = 39,
+
+        /*
+         * UpdateGroup = 15
+         */
+         UpdateGroupOk = 40,
+         UpdateGroupError = 41,
     }
 }

@@ -19,6 +19,7 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using System.Net.Mail;
 using System.Net;
+using Newtonsoft.Json.Linq;
 
 namespace Caight
 {
@@ -452,7 +453,7 @@ namespace Caight
                             var groups = new List<CatGroup>();
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT id, name, owner_email FROM managing_group WHERE id IN (SELECT group_id FROM participate WHERE account_email='{email}');";
+                                cmd.CommandText = $"SELECT id, name, owner_email, locked FROM managing_group WHERE id IN (SELECT group_id FROM participate WHERE account_email='{email}');";
                                 using var reader = cmd.ExecuteReader();
 
                                 if (reader.HasRows)
@@ -462,8 +463,9 @@ namespace Caight
                                         int id = reader.GetInt32(0);
                                         string name = reader.GetString(1);
                                         string owner = reader.GetString(2);
+                                        bool locked = reader.GetBoolean(3);
 
-                                        groups.Add(new CatGroup(id, name, owner));
+                                        groups.Add(new CatGroup(id, name, owner, locked));
                                     }
                                 }
                                 else
@@ -857,21 +859,21 @@ namespace Caight
                                 }
                             }
 
-                            int groupId = HexStringToInt32(groupValue[0]);
+                            int groupId;
                             int.TryParse(groupValue[0], out groupId);
                             string password = Methods.HashPassword(groupValue[1]);
                             bool joinable = false;
                             bool passwordMatches = false;
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT pw, joinable FROM managing_group WHERE id={groupId};";
+                                cmd.CommandText = $"SELECT pw, locked FROM managing_group WHERE id={groupId};";
 
                                 using var reader = cmd.ExecuteReader();
                                 if (reader.HasRows)
                                 {
                                     reader.Read();
                                     passwordMatches = string.Equals(password, reader.GetString(0));
-                                    joinable = reader.GetBoolean(1);
+                                    joinable = !reader.GetBoolean(1);
                                 }
                                 else
                                 {
@@ -894,7 +896,7 @@ namespace Caight
 
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"INSERT INTO participate (group_id, account_email) VALUES ({groupId}, '{email}');";  
+                                cmd.CommandText = $"INSERT INTO participate (group_id, account_email) VALUES ({groupId}, '{email}');";
                                 try
                                 {
                                     cmd.ExecuteNonQuery();
@@ -908,6 +910,105 @@ namespace Caight
 
                             await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.JoinGroupOk));
                             break;
+                        }
+
+                    case RequestId.DownloadMember:
+                        {
+                            await conn.ReceiveAsync();
+                            int groupId = Methods.ByteArrayToInt(conn.BinaryMessage);
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT name, email FROM account WHERE email IN (SELECT account_email FROM participate WHERE group_id={groupId});";
+                                using var reader = cmd.ExecuteReader();
+                                if (reader.HasRows)
+                                {
+                                    while (reader.Read())
+                                    {
+                                        StringBuilder builder = new StringBuilder();
+                                        builder.Append(reader.GetString(0));
+                                        builder.Append('\0');
+                                        builder.Append(reader.GetString(1));
+
+                                        await conn.SendTextAsync(builder.ToString());
+                                    }
+
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.EndOfEntity));
+                                    break;
+                                }
+                                else
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DownloadMemberError));
+                                    break;
+                                }
+                            }
+                        }
+
+                    case RequestId.UpdateGroup:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            await conn.ReceiveAsync();
+                            string jsonString = conn.TextMessage;
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        reader.Read();
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UpdateGroupError));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            JObject json = JObject.Parse(jsonString);
+                            int id = json.GetValue("id").ToObject<int>();
+                            var updateList = new List<string>();
+                            JToken temp;
+                            if (json.TryGetValue("name", out temp))
+                            {
+                                updateList.Add($"name='{temp.ToObject<string>()}'");
+                            }
+                            if (json.TryGetValue("password", out temp))
+                            {
+                                updateList.Add($"pw='{temp.ToObject<string>()}'");
+                            }
+                            if (json.TryGetValue("locked", out temp))
+                            {
+                                updateList.Add($"locked={temp.ToObject<bool>()}");
+                            }
+                            if (json.TryGetValue("manager", out temp))
+                            {
+                                updateList.Add($"manager='{temp.ToObject<string>()}'");
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                try
+                                {
+                                    cmd.CommandText = $"UPDATE managing_group SET {string.Join(',', updateList.ToArray())} WHERE id={id};";
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UpdateGroupOk));
+                                    break;
+                                }
+                                catch
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UpdateGroupError));
+                                    break;
+                                }
+                            }
                         }
 
                     case RequestId.Unknown:

@@ -35,5 +35,9 @@ namespace Caight
         DeleteAccount = 12,
 
         JoinGroup = 13,
+
+        DownloadMember = 14,
+
+        UpdateGroup = 15,
     }
 }
