@@ -409,7 +409,7 @@ namespace Caight
 
                                 using (var cmd = DbConn.CreateCommand())
                                 {
-                                    cmd.CommandText = 
+                                    cmd.CommandText =
                                         $"INSERT INTO managed (group_id, cat_id) VALUES({groupId}, {catId});" +
                                         $"INSERT INTO weighs (cat_id, measured, weight) VALUES({catId}, {today}, {weight});";
                                     cmd.ExecuteNonQuery();
@@ -614,7 +614,7 @@ namespace Caight
                                     }
                                 }
                             }
-                            
+
                             using (var cmd = DbConn.CreateCommand())
                             {
                                 cmd.CommandText = $"UPDATE account SET auth_token=null WHERE email='{email}';";
@@ -656,8 +656,8 @@ namespace Caight
                             string hash = Methods.CreateAuthenticationToken(email + expireDue);
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = 
-                                    $"DELETE FROM reset_password WHERE email='{email}';" + 
+                                cmd.CommandText =
+                                    $"DELETE FROM reset_password WHERE email='{email}';" +
                                     $"INSERT INTO reset_password (email, expire_due, hash) VALUES ('{email}', {expireDue}, '{hash}');";
                                 try
                                 {
@@ -670,7 +670,7 @@ namespace Caight
                                 }
                             }
 
-                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordUriCreated)); 
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.ResetPasswordUriCreated));
 
                             string url = $"https://caight.herokuapp.com/resetpassword/{hash}";
                             var mail = new MailSender(email, url);
@@ -827,6 +827,86 @@ namespace Caight
                                     break;
                                 }
                             }
+                        }
+
+                    case RequestId.JoinGroup:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            await conn.ReceiveAsync();
+                            string[] groupValue = conn.TextMessage.Split('\0');
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using var reader = cmd.ExecuteReader();
+                                if (reader.HasRows)
+                                {
+                                    reader.Read();
+                                    email = reader.GetString(0);
+                                }
+                                else
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.JoinGroupError));
+                                    break;
+                                }
+                            }
+
+                            string groupId = groupValue[0];
+                            string password = Methods.HashPassword(groupValue[1]);
+                            bool joinable = false;
+                            bool passwordMatches = false;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT password, joinable FROM managing_group WHERE id={groupId};";
+
+                                using var reader = cmd.ExecuteReader();
+                                if (reader.HasRows)
+                                {
+                                    reader.Read();
+                                    passwordMatches = string.Equals(password, reader.GetString(0));
+                                    joinable = reader.GetBoolean(1);
+                                }
+                                else
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.JoinGroupNotExists));
+                                    break;
+                                }
+                            }
+
+                            if (!joinable)
+                            {
+                                await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.JoinGroupRejected));
+                                break;
+                            }
+
+                            if (!passwordMatches)
+                            {
+                                await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.JoinGroupWrongPassword));
+                                break;
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"INSERT INTO participate (group_id, account_email) VALUES ({groupId}, '{email}');";
+                                try
+                                {
+                                    cmd.ExecuteNonQuery();
+                                }
+                                catch
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.JoinGroupError));
+                                    break;
+                                }
+                            }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.JoinGroupOk));
+                            break;
                         }
 
                     case RequestId.Unknown:

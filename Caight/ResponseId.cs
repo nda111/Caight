@@ -88,8 +88,16 @@ namespace Caight
         /*
          * DeleteAccount = 12
          */
-         DeleteAccountOk = 31,
-         DeleteAccountNo = 32,
+        DeleteAccountOk = 31,
+        DeleteAccountNo = 32,
 
+        /*
+         * JoinGroup = 13
+         */
+        JoinGroupOk = 33,
+        JoinGroupNotExists = 34,
+        JoinGroupWrongPassword = 35,
+        JoinGroupRejected = 36,
+        JoinGroupError = 37,
     }
 }
