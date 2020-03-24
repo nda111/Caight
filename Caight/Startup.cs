@@ -814,9 +814,9 @@ namespace Caight
 
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = 
-                                    $"DELETE FROM account WHERE email='{email}';" + 
-                                    $"DELETE FROM participate WHERE account_email='{email}'";
+                                cmd.CommandText =
+                                    $"DELETE FROM participate WHERE account_email='{email}';" +
+                                    $"DELETE FROM account WHERE email='{email}';";
 
                                 try
                                 {
@@ -1001,10 +1001,17 @@ namespace Caight
                             {
                                 try
                                 {
-                                    cmd.CommandText = $"UPDATE managing_group SET {string.Join(',', updateList.ToArray())} WHERE id={id};";
-                                    cmd.ExecuteNonQuery();
+                                    cmd.CommandText = $"UPDATE managing_group SET {string.Join(',', updateList.ToArray())} WHERE id={id} AND owner_email='{email}';";
+                                    int affectedCount = cmd.ExecuteNonQuery();
 
-                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UpdateGroupOk));
+                                    if (affectedCount == 1)
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UpdateGroupOk));
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UpdateGroupError));
+                                    }
                                     break;
                                 }
                                 catch
@@ -1013,6 +1020,70 @@ namespace Caight
                                     break;
                                 }
                             }
+                        }
+
+                    case RequestId.DropGroup:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            await conn.ReceiveAsync();
+                            int groupId = Methods.ByteArrayToInt(conn.BinaryMessage);
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        reader.Read();
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropGroupError));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            int memberCount;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT count(account_email) FROM participate WHERE group_id={groupId};";
+                                memberCount = (int)cmd.ExecuteScalar();
+                            }
+
+                            if (memberCount == 1)
+                            {
+                                try
+                                {
+                                    using (var cmd = DbConn.CreateCommand())
+                                    {
+                                        cmd.CommandText =
+                                            $"DELETE FROM participate WHERE id={groupId};" +
+                                            $"DELETE FROM managing_group WHERE id={groupId};";
+
+                                        cmd.ExecuteNonQuery();
+                                    }
+
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropGroupOk));
+                                }
+                                catch
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropGroupError));
+                                }
+                            }
+                            else
+                            {
+                                await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropGroupMemberExists));
+                            }
+                            break;
                         }
 
                     case RequestId.Unknown:

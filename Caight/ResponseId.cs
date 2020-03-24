@@ -103,13 +103,20 @@ namespace Caight
         /*
          * DownloadMember = 14
          */
-         DownloadMemberError = 38,
-         EndOfMember = 39,
+        DownloadMemberError = 38,
+        EndOfMember = 39,
 
         /*
          * UpdateGroup = 15
          */
-         UpdateGroupOk = 40,
-         UpdateGroupError = 41,
+        UpdateGroupOk = 40,
+        UpdateGroupError = 41,
+
+        /*
+         * DropGroup = 16
+         */
+         DropGroupOk = 42,
+         DropGroupMemberExists = 43,
+         DropGroupError = 44,
     }
 }

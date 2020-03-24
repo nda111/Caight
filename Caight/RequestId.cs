@@ -39,5 +39,7 @@ namespace Caight
         DownloadMember = 14,
 
         UpdateGroup = 15,
+
+        DropGroup = 16,
     }
 }
