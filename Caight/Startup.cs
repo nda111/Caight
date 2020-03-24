@@ -919,7 +919,7 @@ namespace Caight
             }
         }
 
-        private int HexStringToInt32(this string str)
+        private int HexStringToInt32(string str)
         {
             try
             {
