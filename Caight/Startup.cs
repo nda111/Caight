@@ -994,7 +994,7 @@ namespace Caight
                             }
                             if (json.TryGetValue("manager", out temp))
                             {
-                                updateList.Add($"manager='{temp.ToObject<string>()}'");
+                                updateList.Add($"owner_email='{temp.ToObject<string>()}'");
                             }
 
                             using (var cmd = DbConn.CreateCommand())
