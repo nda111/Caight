@@ -933,7 +933,7 @@ namespace Caight
                                         await conn.SendTextAsync(builder.ToString());
                                     }
 
-                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.EndOfEntity));
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.EndOfMember));
                                     break;
                                 }
                                 else
