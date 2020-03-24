@@ -1066,7 +1066,7 @@ namespace Caight
                                     using (var cmd = DbConn.CreateCommand())
                                     {
                                         cmd.CommandText =
-                                            $"DELETE FROM participate WHERE id={groupId};" +
+                                            $"DELETE FROM participate WHERE group_id={groupId};" +
                                             $"DELETE FROM managing_group WHERE id={groupId};";
 
                                         cmd.ExecuteNonQuery();
