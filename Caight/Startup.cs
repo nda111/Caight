@@ -1003,17 +1003,15 @@ namespace Caight
                                 {
                                     cmd.CommandText = $"UPDATE managing_group SET {string.Join(',', updateList.ToArray())} WHERE id={id};";
                                     await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UpdateGroupOk));
-
-                                    throw new Exception(cmd.CommandText);
-
-
-                                    break;
                                 }
                                 catch
                                 {
                                     await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UpdateGroupError));
                                     break;
                                 }
+
+                                throw new Exception(cmd.CommandText);
+                                break;
                             }
                         }
 
