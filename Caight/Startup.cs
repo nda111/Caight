@@ -1236,7 +1236,7 @@ namespace Caight
                             int catId = json.GetValue("id").ToObject<int>();
                             using (var cmd = DbConn.CreateCommand())
                             {
-                                cmd.CommandText = $"SELECT account_email FROM participate WHERE account_email={email} AND group_id IN (SELECT group_id FROM managed WHERE cat_id={catId});";
+                                cmd.CommandText = $"SELECT account_email FROM participate WHERE account_email='{email}' AND group_id IN (SELECT group_id FROM managed WHERE cat_id={catId});";
                                 using var reader = cmd.ExecuteReader();
                                 if (!reader.HasRows)
                                 {
