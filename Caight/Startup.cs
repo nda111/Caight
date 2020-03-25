@@ -1140,6 +1140,67 @@ namespace Caight
                             break;
                         }
 
+                    case RequestId.DropCat:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            await conn.ReceiveAsync();
+                            int catId = Methods.ByteArrayToInt(conn.BinaryMessage);
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        reader.Read();
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropCatError));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT owner_email FROM managing_group WHERE id IN (SELECT group_id FROM managed WHERE cat_id={catId});";
+
+                                using var reader = cmd.ExecuteReader();
+                                if (reader.HasRows)
+                                {
+                                    reader.Read();
+                                    string ownerEmail = reader.GetString(0);
+
+                                    if (email != ownerEmail)
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropCatError));
+                                        break;
+                                    }
+                                }
+                                else
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropCatError));
+                                    break;
+                                }
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"DELETE FROM cat WHERE id={catId};";
+                                cmd.ExecuteNonQuery();
+                            }
+                            break;
+                        }
+
                     case RequestId.Unknown:
                     default:
                         break;

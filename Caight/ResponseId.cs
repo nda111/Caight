@@ -124,5 +124,12 @@ namespace Caight
          */
         WithdrawGroupOk = 45,
         WithdrawGroupError = 46,
+
+        /*
+         * DropCat = 18
+         */
+
+        DropCatOk = 47,
+        DropCatError = 48,
     }
 }
