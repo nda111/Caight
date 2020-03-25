@@ -128,8 +128,13 @@ namespace Caight
         /*
          * DropCat = 18
          */
-
         DropCatOk = 47,
         DropCatError = 48,
+
+        /*
+         * EditCat = 19
+         */
+        EditCatOk = 49,
+        EditCatError = 50,
     }
 }

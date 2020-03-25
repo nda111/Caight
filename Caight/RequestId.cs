@@ -45,5 +45,7 @@ namespace Caight
         WithdrawGroup = 17,
 
         DropCat = 18,
+
+        EditCat = 19,
     }
 }

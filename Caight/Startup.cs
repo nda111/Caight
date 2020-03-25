@@ -1202,6 +1202,84 @@ namespace Caight
                             break;
                         }
 
+                    case RequestId.EditCat:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            await conn.ReceiveAsync();
+                            string jsonArgs = conn.TextMessage;
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        reader.Read();
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.EditCatError));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            JObject json = JObject.Parse(jsonArgs);
+                            int catId = json.GetValue("id").ToObject<int>();
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT account_email FROM participate WHERE account_email={email} AND group_id IN (SELECT group_id FROM managed WHERE cat_id={catId});";
+                                using var reader = cmd.ExecuteReader();
+                                if (!reader.HasRows)
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.EditCatError));
+                                    break;
+                                }
+                            }
+
+                            List<string> argList = new List<string>();
+                            {
+                                JToken temp;
+                                if (json.TryGetValue("color", out temp))
+                                {
+                                    argList.Add($"color={temp.ToObject<int>()}");
+                                }
+                                if (json.TryGetValue("name", out temp))
+                                {
+                                    argList.Add($"name={temp.ToObject<string>()}");
+                                }
+                                if (json.TryGetValue("birthday", out temp))
+                                {
+                                    argList.Add($"birth={temp.ToObject<long>()}");
+                                }
+                                if (json.TryGetValue("gender", out temp))
+                                {
+                                    argList.Add($"gender={temp.ToObject<short>()}");
+                                }
+                                if (json.TryGetValue("species", out temp))
+                                {
+                                    argList.Add($"species={temp.ToObject<int>()}");
+                                }
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"UPDATE cat SET {string.Join(',', argList)} WHERE id={catId};";
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.EditCatOk));
+                            break;
+                        }
+
                     case RequestId.Unknown:
                     default:
                         break;
