@@ -1198,6 +1198,7 @@ namespace Caight
                                 cmd.CommandText = $"DELETE FROM cat WHERE id={catId};";
                                 cmd.ExecuteNonQuery();
                             }
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.DropCatOk));
                             break;
                         }
 
