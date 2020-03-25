@@ -1254,7 +1254,7 @@ namespace Caight
                                 }
                                 if (json.TryGetValue("name", out temp))
                                 {
-                                    argList.Add($"name={temp.ToObject<string>()}");
+                                    argList.Add($"name='{temp.ToObject<string>()}'");
                                 }
                                 if (json.TryGetValue("birthday", out temp))
                                 {
