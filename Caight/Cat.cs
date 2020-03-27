@@ -18,6 +18,7 @@ namespace Caight
         public const string JsonKeyWeight = "weights";
         public const string JsonKeyWeightWhen = "when";
         public const string JsonKeyWeightValue = "weight";
+        public const string JsonKeyAttributes = "attributes";
 
         public int Id { get; private set; } = -1;
 
@@ -33,9 +34,11 @@ namespace Caight
 
         public SortedDictionary<long, float> Weights { get; set; } = null;
 
+        public string[] Attributes { get; set; } = null;
+
         private Cat() { }
 
-        public Cat(int id, int color, string name, long birthday, short gender, int species, SortedDictionary<long, float> weights)
+        public Cat(int id, int color, string name, long birthday, short gender, int species, SortedDictionary<long, float> weights, string[] attributes = null)
         {
             Id = id;
             Color = color;
@@ -44,6 +47,7 @@ namespace Caight
             Gender = gender;
             Species = species;
             Weights = weights;
+            Attributes = attributes;
         }
 
         public JObject ToJsonObject()
@@ -58,6 +62,15 @@ namespace Caight
                 weightArray.Add(weight);
             }
 
+            JArray attributes = new JArray();
+            if (Attributes != null)
+            {
+                foreach (string attr in Attributes)
+                {
+                    attributes.Add(attr);
+                }
+            }
+
             JObject json = new JObject()
             {
                 { JsonKeyId, Id },
@@ -67,6 +80,7 @@ namespace Caight
                 { JsonKeyGender, Gender },
                 { JsonKeySpecies, Species },
                 { JsonKeyWeight, weightArray },
+                { JsonKeyAttributes, attributes },
             };
 
             return json;
@@ -83,6 +97,13 @@ namespace Caight
                     weight.GetValue(JsonKeyWeightValue).ToObject<float>());
             }
 
+            JArray jAttributes = json.GetValue(JsonKeyAttributes).ToObject<JArray>();
+            var attributes = new string[jAttributes.Count];
+            for (int i = 0; i < attributes.Length; i++)
+            {
+                attributes[i] = jAttributes[i].ToObject<string>();
+            }
+
             Cat cat = new Cat();
             cat.Id = json.GetValue(JsonKeyId).ToObject<int>();
             cat.Color = unchecked((int)json.GetValue(JsonKeyColor).ToObject<long>());
@@ -91,6 +112,7 @@ namespace Caight
             cat.Gender = json.GetValue(JsonKeyGender).ToObject<short>();
             cat.Species = json.GetValue(JsonKeySpecies).ToObject<int>();
             cat.Weights = weights;
+            cat.Attributes = attributes;
 
             return cat;
         }
