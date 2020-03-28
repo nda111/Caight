@@ -1292,10 +1292,7 @@ namespace Caight
                             int catId = Methods.ByteArrayToInt(conn.BinaryMessage);
 
                             await conn.ReceiveAsync();
-                            string upsertString = conn.TextMessage;
-
-                            await conn.ReceiveAsync();
-                            string deleteString = conn.TextMessage;
+                            string jsonString = conn.TextMessage;
 
                             string email = null;
                             using (var cmd = DbConn.CreateCommand())
@@ -1329,11 +1326,11 @@ namespace Caight
                             }
 
                             // TODO
-                            //JObject data = new JObject(upsertString); // bug
+                            JObject data = JObject.Parse(jsonString); // bug
                             StringBuilder queryBuilder = new StringBuilder();
 
-                            JArray upsertArray = new JArray(upsertString);
-                            JArray deleteArray = new JArray(deleteString);
+                            JArray upsertArray = data.GetValue("upsert").ToObject<JArray>();
+                            JArray deleteArray = data.GetValue("delete").ToObject<JArray>();
 
                             for (int i = 0; i < upsertArray.Count; i++)
                             {
