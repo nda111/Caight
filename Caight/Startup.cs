@@ -484,7 +484,7 @@ namespace Caight
                                 List<Cat> catList = new List<Cat>();
                                 using (var cmd = DbConn.CreateCommand())
                                 {
-                                    cmd.CommandText = $"SELECT id, name, birth, gender, species, color FROM cat WHERE id IN (SELECT cat_id FROM managed WHERE group_id={groupId}) ORDER BY id;";
+                                    cmd.CommandText = $"SELECT id, name, birth, gender, species, color, attributes FROM cat WHERE id IN (SELECT cat_id FROM managed WHERE group_id={groupId}) ORDER BY id;";
                                     using var reader = cmd.ExecuteReader();
 
                                     while (reader.Read())
@@ -495,8 +495,9 @@ namespace Caight
                                         short gender = reader.GetInt16(3);
                                         int species = reader.GetInt32(4);
                                         int color = reader.GetInt32(5);
+                                        string[] attrs = reader.GetString(6).Split(' ');
 
-                                        catList.Add(new Cat(id, color, name, birth, gender, species, null));
+                                        catList.Add(new Cat(id, color, name, birth, gender, species, attrs));
                                     }
                                 }
 
