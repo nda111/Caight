@@ -396,7 +396,7 @@ namespace Caight
                             {
                                 using (var cmd = DbConn.CreateCommand())
                                 {
-                                    cmd.CommandText = $"INSERT INTO cat (color, name, birth, gender, species, attributes) VALUES({color}, '{name}', {birthday}, {gender}, {species}, {attributes});";
+                                    cmd.CommandText = $"INSERT INTO cat (color, name, birth, gender, species, attributes) VALUES({color}, '{name}', {birthday}, {gender}, {species}, '{attributes}');";
                                     cmd.ExecuteNonQuery();
                                 }
 
