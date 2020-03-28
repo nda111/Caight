@@ -352,6 +352,7 @@ namespace Caight
                             int species = int.Parse(catValue[6]);
                             long today = long.Parse(catValue[7]);
                             float weight = float.Parse(catValue[8]);
+                            string attributes = catValue[9];
 
                             ResponseId response = ResponseId.Unknown;
                             using (var cmd = DbConn.CreateCommand())
@@ -395,7 +396,7 @@ namespace Caight
                             {
                                 using (var cmd = DbConn.CreateCommand())
                                 {
-                                    cmd.CommandText = $"INSERT INTO cat (color, name, birth, gender, species) VALUES({color}, '{name}', {birthday}, {gender}, {species});";
+                                    cmd.CommandText = $"INSERT INTO cat (color, name, birth, gender, species, attributes) VALUES({color}, '{name}', {birthday}, {gender}, {species}, {attributes});";
                                     cmd.ExecuteNonQuery();
                                 }
 
