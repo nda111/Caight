@@ -412,7 +412,7 @@ namespace Caight
                                 {
                                     cmd.CommandText =
                                         $"INSERT INTO managed (group_id, cat_id) VALUES({groupId}, {catId});" +
-                                        $"INSERT INTO weighs (cat_id, measured, weight) VALUES({catId}, {today}, {weight});";
+                                        $"INSERT INTO weighs (cat_id, measured, weight) VALUES({catId}, {today}, cast ({weight} AS REAL));";
                                     cmd.ExecuteNonQuery();
                                 }
 
@@ -1337,7 +1337,7 @@ namespace Caight
                                 long date = obj.GetValue("date").ToObject<long>();
                                 double weight = obj.GetValue("weight").ToObject<double>();
 
-                                queryBuilder.Append($"INSERT INTO weighs (cat_id, measured, weight) VALUES({catId}, {date}, {weight}) ON CONFLICT (cat_id, measured) DO UPDATE SET weight={weight};");
+                                queryBuilder.Append($"INSERT INTO weighs (cat_id, measured, weight) VALUES({catId}, {date}, cast ({weight} AS REAL)) ON CONFLICT (cat_id, measured) DO UPDATE SET weight=cast ({weight} AS REAL);");
                             }
 
                             for (int i = 0; i < deleteArray.Count; i++)
@@ -1346,7 +1346,7 @@ namespace Caight
                                 long date = obj.GetValue("date").ToObject<long>();
                                 double weight = obj.GetValue("weight").ToObject<double>();
 
-                                queryBuilder.Append($"DELETE FROM weighs WHERE cat_id={catId} AND measured={date} AND weight={weight};");
+                                queryBuilder.Append($"DELETE FROM weighs WHERE cat_id={catId} AND measured={date} AND weight=cast ({weight} AS REAL);");
                             }
 
                             using (var cmd = DbConn.CreateCommand())
