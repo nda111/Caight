@@ -497,7 +497,7 @@ namespace Caight
                                         int color = reader.GetInt32(5);
                                         string[] attrs = reader.GetString(6).Split(' ');
 
-                                        catList.Add(new Cat(id, color, name, birth, gender, species, attrs));
+                                        catList.Add(new Cat(id, color, name, birth, gender, species, null, attrs));
                                     }
                                 }
 
