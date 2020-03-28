@@ -351,7 +351,7 @@ namespace Caight
                             short gender = short.Parse(catValue[5]);
                             int species = int.Parse(catValue[6]);
                             long today = long.Parse(catValue[7]);
-                            float weight = float.Parse(catValue[8]);
+                            float weight = (int)(float.Parse(catValue[8]) * 100) / 100.0F;
 
                             ResponseId response = ResponseId.Unknown;
                             using (var cmd = DbConn.CreateCommand())
@@ -1325,8 +1325,7 @@ namespace Caight
                                 }
                             }
 
-                            // TODO
-                            JObject data = JObject.Parse(jsonString); // bug
+                            JObject data = JObject.Parse(jsonString);
                             StringBuilder queryBuilder = new StringBuilder();
 
                             JArray upsertArray = data.GetValue("upsert").ToObject<JArray>();
@@ -1336,7 +1335,7 @@ namespace Caight
                             {
                                 JObject obj = upsertArray[i].ToObject<JObject>();
                                 long date = obj.GetValue("date").ToObject<long>();
-                                float weight = obj.GetValue("weight").ToObject<float>();
+                                float weight = (int)(obj.GetValue("weight").ToObject<float>() * 100) / 100.0F;
 
                                 queryBuilder.Append($"INSERT INTO weighs (cat_id, measured, weight) VALUES({catId}, {date}, {weight}) ON CONFLICT (cat_id, measured) DO UPDATE SET weight={weight};");
                             }
@@ -1345,7 +1344,7 @@ namespace Caight
                             {
                                 JObject obj = deleteArray[i].ToObject<JObject>();
                                 long date = obj.GetValue("date").ToObject<long>();
-                                float weight = obj.GetValue("weight").ToObject<float>();
+                                float weight = (int)(obj.GetValue("weight").ToObject<float>() * 100) / 100.0F;
 
                                 queryBuilder.Append($"DELETE FROM weighs WHERE cat_id={catId} AND measured={date} AND weight={weight};");
                             }
