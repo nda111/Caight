@@ -136,5 +136,11 @@ namespace Caight
          */
         EditCatOk = 49,
         EditCatError = 50,
+
+        /*
+         * SyncWeight = 20
+         */
+        UploadWeightOk = 51,
+        UploadWeightError = 52,
     }
 }

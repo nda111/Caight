@@ -1280,7 +1280,93 @@ namespace Caight
                             break;
                         }
 
+                    case RequestId.UploadWeight:
+                        {
+                            await conn.ReceiveAsync();
+                            long accountId = Methods.ByteArrayToLong(conn.BinaryMessage);
 
+                            await conn.ReceiveAsync();
+                            string token = conn.TextMessage;
+
+                            await conn.ReceiveAsync();
+                            int catId = Methods.ByteArrayToInt(conn.BinaryMessage);
+
+                            await conn.ReceiveAsync();
+                            string jsonString = conn.TextMessage;
+
+                            string email = null;
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT email FROM account WHERE accnt_id={accountId} AND auth_token='{token}';";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    if (reader.HasRows)
+                                    {
+                                        reader.Read();
+                                        email = reader.GetString(0);
+                                    }
+                                    else
+                                    {
+                                        await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UploadWeightError));
+                                        break;
+                                    }
+                                }
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = $"SELECT group_id FROM participate WHERE account_email='{email}' AND group_id IN (SELECT group_id FROM managed WHERE cat_id={catId});";
+                                using var reader = cmd.ExecuteReader();
+
+                                if (!reader.HasRows)
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UploadWeightError));
+                                    break;
+                                }
+                            }
+
+                            // TODO
+                            JObject data = new JObject(jsonString);
+                            StringBuilder queryBuilder = new StringBuilder();
+
+                            JArray upsertArray = data.GetValue("upsert").ToObject<JArray>();
+                            JArray deleteArray = data.GetValue("delete").ToObject<JArray>();
+
+                            for (int i = 0; i < upsertArray.Count; i++)
+                            {
+                                JObject obj = upsertArray[i].ToObject<JObject>();
+                                long date = obj.GetValue("date").ToObject<long>();
+                                float weight = obj.GetValue("weight").ToObject<float>();
+
+                                queryBuilder.Append($"INSERT INTO weighs (cat_id, measured, weight) VALUES({catId}, {date}, {weight}) ON CONFLICT (cat_id, measured) DO UPDATE SET weight={weight};");
+                            }
+
+                            for (int i = 0; i < deleteArray.Count; i++)
+                            {
+                                JObject obj = deleteArray[i].ToObject<JObject>();
+                                long date = obj.GetValue("date").ToObject<long>();
+                                float weight = obj.GetValue("weight").ToObject<float>();
+
+                                queryBuilder.Append($"DELETE FROM weighs WHERE cat_id={catId} AND measured={date} AND weight={weight};");
+                            }
+
+                            using (var cmd = DbConn.CreateCommand())
+                            {
+                                cmd.CommandText = queryBuilder.ToString();
+                                try
+                                {
+                                    cmd.ExecuteNonQuery();
+                                }
+                                catch
+                                {
+                                    await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UploadWeightError));
+                                    break;
+                                }
+                            }
+
+                            await conn.SendBinaryAsync(Methods.IntToByteArray((int)ResponseId.UploadWeightOk));
+                            break;
+                        }
 
                     case RequestId.Unknown:
                     default:

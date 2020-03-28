@@ -47,5 +47,7 @@ namespace Caight
         DropCat = 18,
 
         EditCat = 19,
+
+        UploadWeight = 20,
     }
 }
