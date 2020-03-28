@@ -1335,7 +1335,7 @@ namespace Caight
                             {
                                 JObject obj = upsertArray[i].ToObject<JObject>();
                                 long date = obj.GetValue("date").ToObject<long>();
-                                float weight = obj.GetValue("weight").ToObject<float>();
+                                double weight = obj.GetValue("weight").ToObject<double>();
 
                                 queryBuilder.Append($"INSERT INTO weighs (cat_id, measured, weight) VALUES({catId}, {date}, {weight}) ON CONFLICT (cat_id, measured) DO UPDATE SET weight={weight};");
                             }
@@ -1344,7 +1344,7 @@ namespace Caight
                             {
                                 JObject obj = deleteArray[i].ToObject<JObject>();
                                 long date = obj.GetValue("date").ToObject<long>();
-                                float weight = obj.GetValue("weight").ToObject<float>();
+                                double weight = obj.GetValue("weight").ToObject<double>();
 
                                 queryBuilder.Append($"DELETE FROM weighs WHERE cat_id={catId} AND measured={date} AND weight={weight};");
                             }
