@@ -351,7 +351,7 @@ namespace Caight
                             short gender = short.Parse(catValue[5]);
                             int species = int.Parse(catValue[6]);
                             long today = long.Parse(catValue[7]);
-                            float weight = (int)(float.Parse(catValue[8]) * 100) / 100.0F;
+                            float weight = float.Parse(catValue[8]);
 
                             ResponseId response = ResponseId.Unknown;
                             using (var cmd = DbConn.CreateCommand())
@@ -1335,7 +1335,7 @@ namespace Caight
                             {
                                 JObject obj = upsertArray[i].ToObject<JObject>();
                                 long date = obj.GetValue("date").ToObject<long>();
-                                float weight = (int)(obj.GetValue("weight").ToObject<float>() * 100) / 100.0F;
+                                float weight = obj.GetValue("weight").ToObject<float>();
 
                                 queryBuilder.Append($"INSERT INTO weighs (cat_id, measured, weight) VALUES({catId}, {date}, {weight}) ON CONFLICT (cat_id, measured) DO UPDATE SET weight={weight};");
                             }
@@ -1344,7 +1344,7 @@ namespace Caight
                             {
                                 JObject obj = deleteArray[i].ToObject<JObject>();
                                 long date = obj.GetValue("date").ToObject<long>();
-                                float weight = (int)(obj.GetValue("weight").ToObject<float>() * 100) / 100.0F;
+                                float weight = obj.GetValue("weight").ToObject<float>();
 
                                 queryBuilder.Append($"DELETE FROM weighs WHERE cat_id={catId} AND measured={date} AND weight={weight};");
                             }
