@@ -8723,11 +8723,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\nda11\\source\\Git\\Caight\\Caight\\Caight.csproj",
+      "projectUniqueName": "C:\\Users\\nda11\\source\\Git\\Caight_Web\\Caight\\Caight.csproj",
       "projectName": "Caight",
-      "projectPath": "C:\\Users\\nda11\\source\\Git\\Caight\\Caight\\Caight.csproj",
+      "projectPath": "C:\\Users\\nda11\\source\\Git\\Caight_Web\\Caight\\Caight.csproj",
       "packagesPath": "C:\\Users\\nda11\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\nda11\\source\\Git\\Caight\\Caight\\obj\\",
+      "outputPath": "C:\\Users\\nda11\\source\\Git\\Caight_Web\\Caight\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Microsoft\\Xamarin\\NuGet\\"

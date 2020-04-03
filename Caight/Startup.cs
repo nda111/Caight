@@ -1270,6 +1270,10 @@ namespace Caight
                                 {
                                     argList.Add($"species={temp.ToObject<int>()}");
                                 }
+                                if (json.TryGetValue("attributes", out temp))
+                                {
+                                    argList.Add($"attributes='{temp.ToObject<string>()}'");
+                                }
                             }
 
                             using (var cmd = DbConn.CreateCommand())
